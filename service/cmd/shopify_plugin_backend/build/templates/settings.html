@@ -1,0 +1,617 @@
+<html>
+	<head>
+		<script src="https://cdn.shopify.com/s/assets/external/app.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+		<script type="text/javascript">
+		ShopifyApp.init({
+			apiKey: {{ .apiKey }},
+			shopOrigin: "https://" + {{ .shopName }} + ".myshopify.com"
+		});
+		</script>
+		<script type="text/javascript">
+		var host = "{{ .host }}" 
+		var BreadClassic = "classic";
+		var BreadPlatform = "platform";
+		var activeVersion = "{{ .activeVersion }}";
+		if (activeVersion === "") { 
+			activeVersion = BreadClassic
+		}
+		var store = {
+			activeVersion: activeVersion,
+			targetedFinancing: "{{ .targetedFinancing }}"
+		}
+
+		ShopifyApp.ready(function(){
+			ShopifyApp.Bar.loadingOff();
+
+			var config = {
+				title: 'Bread Payments Configuration',
+				buttons: {
+					primary: {
+						label: 'Save',
+						message: 'save',
+						callback: function(){
+							// make ajax request to save settings
+							store.targetedFinancing = $('#targeted-financing').is(":checked");
+							var valid = validateForm(store);
+							if (valid !== true) {
+								ShopifyApp.flashError(valid);
+								return;
+							}
+							var selectedVersion = $('input:radio[name=version]:checked').val();
+							if (selectedVersion === BreadClassic) {
+								var data = {
+									"breadApiKey": $("#bread-api-key").val(),
+									"breadApiSecret": $("#bread-secret-key").val(),
+									"breadSandboxApiKey": $("#bread-sandbox-api-key").val(),
+									"breadSandboxSecretKey": $("#bread-sandbox-secret-key").val(),
+									"customCss": $("#bread-custom-css").val(),
+									"customCssCart": $("#bread-custom-css-cart").val(),
+									"createCustomers": $("#bread-create-customers").is(":checked"),
+									"autoSettle": $("#bread-auto-settle").is(":checked"),
+									"actsAsLabel": $("#bread-acts-as-label").is(":checked"),
+									"production": !$("#bread-test-mode").is(":checked"),
+									"manualEmbedScript": $("#bread-manual-embed-script").is(":checked"),
+									"asLowAs": $("#bread-as-low-as").is(":checked"),
+									"enableOrderWebhooks": $("#bread-enable-order-webhooks").is(":checked"),
+									"allowCheckoutPDP": $("#bread-allow-checkout-pdp").is(":checked"),
+									"enableAddToCart": $("#bread-enable-add-to-cart").is(":checked"),
+									"allowCheckoutCart": $("#bread-allow-checkout-cart").is(":checked"),
+									"healthcareMode": $("#bread-healthcare-mode").is(":checked"),
+									"targetedFinancing": $('#targeted-financing').is(":checked"),
+									"targetedFinancingID": $('#targeted-financing-id').val(),
+									"targetedFinancingThreshold": parseInt($('#targeted-financing-threshold').val()),
+									"draftOrderTax": $("#draft-order-tax").is(":checked"),
+									"remainderPayAutoCancel": $("#remainder-pay-auto-cancel").is(":checked")
+								};
+							}else { //breadVersion is platform
+								var data = {
+									"integrationKey": $("#integration-key").val(),
+									"sandboxIntegrationKey": $("#sandbox-integration-key").val(),
+									"platformProduction": !$("#platform-bread-test-mode").is(":checked"),
+									"createCustomers": $("#bread-create-customers").is(":checked"),
+									"enableOrderWebhooks": $("#bread-enable-order-webhooks").is(":checked"),
+									"manualEmbedScript": $("#bread-manual-embed-script").is(":checked")
+								};
+							}
+							
+							ShopifyApp.Bar.loadingOn();
+							$.ajax({
+								"type": "POST",
+								"url": host+"/portal/settings/"+selectedVersion,
+								"data": JSON.stringify(data),
+								"dataType": "json",
+								"contentType": "application/json; charset=utf-8",
+								"success": function (data) {
+									ShopifyApp.Bar.loadingOff();
+									ShopifyApp.flashNotice('Settings updated');
+								},
+								"error": function (err) {
+									ShopifyApp.Bar.loadingOff();
+									console.error(err.responseText);
+									if (err.responseText === 'empty session id') showError();
+									ShopifyApp.flashError("Saving settings failed. Please refresh and try again.");
+								}
+							})
+						}
+					}
+				}
+			};
+			
+			if (store.activeVersion === BreadClassic) { //Enable draft orders for BreadClassic
+				config.buttons.secondary = [{
+					label: "Navigate",
+					type: "dropdown",
+					links: [{
+						label: "Draft Orders",
+						href: host+"/portal/draftorders",
+						target: "app"
+					}]
+				}];
+			}
+
+			ShopifyApp.Bar.initialize(config);
+			// Cache DOM elements
+			var allowPDP = $('#bread-allow-checkout-pdp');
+			var enableAddToCart = $('#bread-enable-add-to-cart');
+			var allowCart = $('#bread-allow-checkout-cart');
+			var copyBtn = $('.copy-btn');
+			var shopId = $('#shop-id');
+			var shopInfo = document.querySelector('.shop-info');
+			var healthcareMode = $('#bread-healthcare-mode');
+			var hcDisclosure = $('#healthcare-disclosure');
+			var errorScreen = $('.error-screen');
+			var errorModal = $('.error-modal');
+			var appRedirect = $('#app-redirect');
+			var tf = $('#targeted-financing');
+			var tfDetails = $('#targeted-financing-details');
+			var tfID = $('#targeted-financing-id');
+			var tfThreshold = $('#targeted-financing-threshold');
+			var tfDisclaimer = $('#targeted-financing-disclaimer');
+			var versionOptions = $("input:radio[name=version]");
+			var classicSection = $("#classic-section");
+			var platformSection = $("#platform-section");
+			var defaultVersionButton = $("#set-default-btn");
+
+			copyBtn.on('click', function() {
+				function blurAll(){
+					var i = document.createElement("input");
+					shopInfo.appendChild(i);
+					i.focus();
+					shopInfo.removeChild(i);
+				}
+				shopId.select();
+				document.execCommand("copy");
+				blurAll();
+			});
+
+			{{ if .breadHealthcareMode }}
+				allowPDP.prop('disabled', true);
+				allowPDP.parent().toggleClass('inactive prohibited');
+				allowCart.prop('disabled', true);
+				allowCart.parent().toggleClass('inactive prohibited');
+			{{ end }}
+			healthcareMode.on('change', function() {
+				if (this.checked) {
+					allowPDP.prop('disabled', true);
+					allowPDP.parent().toggleClass('inactive prohibited');
+					allowCart.prop('disabled', true);
+					allowCart.parent().toggleClass('inactive prohibited');
+					hcDisclosure.show();
+				} else {
+					allowPDP.prop('disabled', false);
+					allowPDP.parent().toggleClass('inactive prohibited');
+					allowCart.prop('disabled', false);
+					allowCart.parent().toggleClass('inactive prohibited');
+					hcDisclosure.hide();
+				}
+			});
+
+			tf.on('change', function() {
+				tfDetails.toggleClass('inactive');
+				tfID.toggleClass('prohibited');
+				tfThreshold.toggleClass('prohibited');
+				if (this.checked) {
+					tfID.prop('disabled', false);
+					tfThreshold.prop('disabled', false);
+					tfDisclaimer.removeClass('slide-hide').addClass('slide-show');
+				} else {
+					tfID.prop('disabled', true);
+					tfThreshold.prop('disabled', true);
+					tfDisclaimer.removeClass('slide-show').addClass('slide-hide');
+				}
+			});
+
+			errorScreen.on('click', hideError);
+			errorModal.on('click', hideError);
+			appRedirect.on('click', function() {
+				ShopifyApp.redirect('/apps');
+			});
+
+			function showError() {
+				errorScreen.fadeIn(300);
+				errorModal.fadeIn(300);
+			}
+			function hideError() {
+				errorScreen.hide();
+				errorModal.hide();
+			}
+			function validateForm(store, targetedFinancingEnabled) {
+				if (store.activeVersion === "") {
+					return 'Set a default bread version';
+				}
+
+				var selectedVersion = $('input:radio[name=version]:checked').val();
+				if (selectedVersion === BreadClassic) {
+					var UUIDValidator = RegExp(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/);
+
+					// Validate targeted financing ID
+					if (targetedFinancingEnabled && !UUIDValidator.test(tfID.val())) {
+						return 'Invalid financing program ID';
+					}
+
+					// Validate targeted financing threshold value
+					var thresholdInt = parseInt(tfThreshold.val());
+					if (isNaN(thresholdInt)) {
+						return 'Targeted financing threshold must be an integer';
+					}
+					if (thresholdInt < 0) {
+						return 'Targeted financing threshold must be 0 or greater';
+					}
+				}
+				
+				return true;
+			}
+
+			versionOptions.on('change', function(){
+				var selectedVersion = $('input:radio[name=version]:checked').val();
+				
+				classicSection.toggleClass("hide");
+				platformSection.toggleClass("hide");
+			})
+
+			defaultVersionButton.on('click', function(){
+				var selectedVersion = $('input:radio[name=version]:checked').val()
+				data = {"activeVersion": selectedVersion};
+
+				ShopifyApp.Bar.loadingOn();
+
+				$.ajax({
+					"type": "POST",
+					"url": host+"/portal/settings/version",
+					"data": JSON.stringify(data),
+					"dataType": "json",
+					"contentType": "application/json; charset=utf-8",
+					"success": function (data) {
+						store.activeVersion = selectedVersion;
+						ShopifyApp.Bar.loadingOff();
+						ShopifyApp.flashNotice('Default version updated');
+
+						window.location.reload();
+					},
+					"error": function (err) {
+						ShopifyApp.Bar.loadingOff();
+						console.error(err.responseText);
+						if (err.responseText === 'empty session id') showError();
+						ShopifyApp.flashError("Saving default version failed. Please refresh and try again.");
+					}
+				});
+			});
+
+			{{ if .webhooksUpdated }}
+				setTimeout(function() {
+				  ShopifyApp.flashNotice('Webhooks updated');
+				}, 1000);
+			{{ end }}
+		});
+		</script>
+		<style>
+		html {
+			font-family: "ProximaNovaLight", "Helvetica Neue", Helvetica, Arial, sans-serif;
+			font-weight: 300;
+			font-size: 16px;
+			background-color: #ffffff;
+		}
+		body {
+			padding: 0 1rem 4rem 1rem;
+		}
+		a {
+			color: #5156ea;
+		}
+		a:hover {
+			color: #0f233f;
+		}
+		label[for="shop-id"] {
+			display: block;
+		}
+		#shop-id {
+			display: inline-block;
+			width: 19rem;
+			border-top-right-radius: 0px;
+			border-bottom-right-radius: 0px;
+			background: #f2f2f2;
+		}
+		.copy-btn {
+			height: 34px;
+			border-radius: 0px 4px 4px 0px;
+			margin-left: -5px;
+			vertical-align: top;
+			transition: all 0.3s ease;
+		}
+		.copy-btn > .glyphicon {
+			top: unset;
+		}
+		.pad-left {
+			padding-left: 20px;
+		}
+		.half-width {
+			min-width: 300px;
+			width: 50%;
+		}
+		#healthcare-disclosure {
+			display: none;
+			margin: 5px 20px;
+			font-weight: 400;
+		}
+		.prohibited {
+			cursor: not-allowed!important;
+		}
+		.inactive {
+			color: #ccc;
+		}
+		.slide-hide {
+			max-height: 0;
+			opacity: 0;
+			overflow-y: hidden;
+		}
+		.slide-show {
+			max-height: 60px;
+			opacity: 1;
+			overflow-y: hidden;
+		}
+		.api-keys {
+			display: block;
+			width: 100%;
+			overflow: auto;
+		}
+		.api-key-set {
+			width: 350px;
+			float: left;
+			padding-right: 20px;
+		}
+		.api-key-set > input {
+			margin-bottom: 0.5rem;
+		}
+		.custom-css {
+			margin-top: 0.5rem;
+		}
+		.custom-css > label {
+			font-weight: 500;
+		}
+		.custom-css > textarea {
+			height: 6rem;
+			max-width: 1200px;
+		}
+		.settings-group {
+			margin: 1.4rem 0;
+		}
+		.error-screen {
+			position: absolute;
+			top: 0;
+			left: 0;
+			height: 100%;
+			width: 100%;
+			background: #fff;
+			opacity: 0.8;
+			cursor: pointer;
+		}
+		.error-modal {
+			position: absolute;
+			top: 12%;
+			left: 0;
+			width: 100%;
+			text-align: center;
+			cursor: pointer;
+		}
+		.link-spacer {
+			margin-left: 6px;
+		}
+		#app-redirect {
+			cursor: pointer;
+			color: blue;
+		}
+		#targeted-financing-details {
+			margin-left: 20px;
+		}
+		#targeted-financing-details > div {
+			margin-top: 0.5rem;
+		}
+		#targeted-financing-details label {
+			font-weight: 500;
+		}
+		#targeted-financing-id {
+			width: 290px;
+		}
+		#targeted-financing-threshold {
+			width: 75px;
+		}
+		#targeted-financing-disclaimer {
+			max-width: 600px;
+			transition: all 0.3s ease;
+		}
+		.hide{
+			display: none;
+		}
+		</style>
+	</head>
+	<body>
+		<div class="container-fluid">
+			<h2>Information</h2>
+			<div class="settings-group shop-info">
+				<label for="shop-id">Bread Shop ID</label>
+				<input id="shop-id" type="text" class="form-control" name="shop-id" value="{{ .shopId }}" readonly>
+				<button type="button" class="btn btn-default copy-btn" aria-label="Left Align">
+				<span class="glyphicon glyphicon-copy" aria-hidden="true"></span>
+				</button>
+			</div>
+			
+			<hr>
+			<div class="version">
+				<h2>Bread Version</h2>
+				<div class="settings-group">
+					<p>Select Bread version.</p>
+					<div>
+						<input type="radio" id="classic" name="version" value="classic" {{ if or (eq .activeVersion "classic") (eq .activeVersion "") }} checked {{ end }}> <!-- Select as default or if explicitly set -->
+						<label for="classic">Classic</label>
+						<input type="radio" id="platform" name="version" value="platform" {{ if eq .activeVersion "platform" }} checked {{ end }}>
+						<label for="platform">Bread 2.0</label>&nbsp;
+						<button id="set-default-btn">Set as Default</button>
+					</div>
+				</div>
+			</div>
+			<hr>
+			<div class="generic-settings">
+				<h2>Generic settings</h2>
+				<div class="settings-group">
+					<p>These settings are identical between Classic and Bread 2.0 versions.</p>
+					<div>
+						<div class="checkbox">
+							<label>
+								<input id="bread-create-customers" type="checkbox" {{ if .breadCreateCustomers }} checked {{ end }}> Save new customers to your Shopify store
+							</label>
+						</div>
+						<div class="checkbox">
+							<label>
+								<input id="bread-enable-order-webhooks" type="checkbox" {{ if .breadEnableOrderWebhooks }} checked {{ end }}>
+								Enable Shopify webhooks for updating orders (Strongly recommended)
+							</label>
+						</div>
+						<div class="checkbox">
+							<label>
+								<input id="bread-manual-embed-script" type="checkbox" {{ if .breadManualEmbedScript }} checked {{ end }}> Select if Bread x Shopify javascript files are manually integrated. <a class="link-spacer" href="https://docs.getbread.com/docs/integration/shopify/installing-bread-in-shopify-part-2/#optimize-button-load-times-for-custom-css-(optional)" target="_blank">See documentation for more information</a>
+							</label>
+						</div>
+					</div>
+				</div>
+			</div>
+			<hr>
+			<div id="classic-section" class='{{ if and (ne .activeVersion "classic") (ne .activeVersion "") }}hide{{ end }}'>
+				<div class="authentication">
+					<h2>Authentication</h2>
+					<div class="settings-group">
+						<p>We provide both production and sandbox API keys. Please ensure sandbox keys are entered if in test mode.</p>
+						<div class="checkbox">
+							<label>
+								<input id="bread-test-mode" type="checkbox" {{ if .breadTestMode }} checked {{ end }}> Use sandbox (test) mode
+							</label>
+						</div>
+						<div class="api-keys">
+							<div class="api-key-set">
+								<label>Live API Key</label>
+								<input id="bread-api-key" class="form-control api-key" type="text" name="api_key" value="{{ .breadApiKey }}" placeholder="Live API Key">
+								<label>Live Secret Key</label>
+								<input id="bread-secret-key" class="form-control api-key" type="text" name="api_secret" value="{{ .breadSecretKey }}" placeholder="Live Secret Key">
+							</div>
+							<div class="api-key-set">
+								<label>Sandbox API Key</label>
+								<input id="bread-sandbox-api-key" class="form-control api-key" type="text" name="sandbox_api_key" value="{{ .breadSandboxApiKey }}" placeholder="Sandbox API Key">
+								<label>Sandbox Secret Key</label>
+								<input id="bread-sandbox-secret-key" class="form-control api-key" type="text" name="sandbox_api_secret" value="{{ .breadSandboxSecretKey }}" placeholder="Sandbox Secret Key">
+							</div>
+						</div>
+					</div>
+				</div>
+				<hr>
+				<div class="settings">
+					<h2>Settings</h2>
+					<div class="settings-group">
+						<h4>General</h4>
+						<div class="checkbox">
+							<label>
+								<input id="bread-auto-settle" type="checkbox" {{ if .breadAutoSettle }} checked {{ end }}> Auto-settle payments made via the Bread button
+							</label>
+						</div>
+					</div>
+					<div class="settings-group">
+						<h4>Button</h4>
+						{{ if .acceleratedCheckoutPermitted }}
+						<div class="checkbox">
+							<label>
+								<input id="bread-allow-checkout-pdp" type="checkbox" {{ if .breadAllowCheckoutPDP }} checked {{ end }}> Allow checkout directly from product detail pages
+							</label>
+						</div>
+						{{ end }}
+						<div class="checkbox">
+							<label>
+								<input id="bread-enable-add-to-cart" type="checkbox" {{ if .breadEnableAddToCart }} checked {{ end }}> Enable add to cart from product detail pages
+							</label>
+						</div>
+						{{ if .acceleratedCheckoutPermitted }}
+						<div class="checkbox">
+							<label>
+								<input id="bread-allow-checkout-cart" type="checkbox" {{ if .breadAllowCheckoutCart }} checked {{ end }}> Allow checkout directly from cart page
+							</label>
+						</div>
+						{{ end }}
+						<div class="checkbox">
+							<label>
+								<input id="bread-as-low-as" type="checkbox" {{ if .breadAsLowAs }} checked {{ end }}> Show ‘As low as’ promotional text and tooltip if users aren’t logged in to Bread
+							</label>
+						</div>
+						<div class="checkbox">
+							<label>
+								<input id="bread-acts-as-label" type="checkbox" {{ if .breadActsAsLabel }} checked {{ end }}> Disable button and show price per month text if users are logged in to Bread (Not recommended)
+							</label>
+						</div>
+						<div class="custom-css">
+							<label>Custom CSS for Product and Cart Buttons</label>
+							<textarea id="bread-custom-css" class="form-control" type="text" name="custom_css" placeholder="Please use double quotes for CSS values where quotes are required and minify your CSS">{{ .breadCustomCss  }}</textarea>
+						</div>
+						<div class="custom-css">
+							<label>Custom CSS for Cart Button</label>
+							<textarea id="bread-custom-css-cart" class="form-control" type="text" name="custom_css_cart" placeholder="Leave blank to use CSS entered above">{{ .breadCustomCssCart }}</textarea>
+						</div>
+					</div>
+					<div class="settings-group">
+						<h4>Targeted Financing</h4>
+						<div class="checkbox">
+							<label>
+								<input id="targeted-financing" type="checkbox" {{ if .targetedFinancing }} checked {{ end }}>Enable targeted financing based on product price or cart total
+								<a class="link-spacer" href="https://docs.getbread.com/docs/manual-integration/bread-checkout/#targeted-financing" target="_blank">Learn more</a>
+							</label>
+						</div>
+						<div id="targeted-financing-details" class="{{ if not .targetedFinancing }} inactive {{ end }}">
+							<div id="targeted-financing-disclaimer" class="{{ if .targetedFinancing }}slide-show{{ else }}slide-hide{{end}}">
+								<p>This setting enables targeted financing in the Bread App (product and cart buttons) only. Make sure to enable targeted financing within your <a href="https://shopify.getbread.com" target="_blank" style="font-weight:400;">Bread Gateway</a> as well to target the gateway checkout flow.</p>
+							</div>
+							<div>
+								<label>Financing program ID</label>
+								<input id="targeted-financing-id" class="form-control{{ if not .targetedFinancing }} prohibited {{ end }}" type="text" value="{{ .targetedFinancingID }}">
+							</div>
+							<div>
+								<label>Cart size threshold (in dollars)</label>
+								<input id="targeted-financing-threshold" class="form-control{{ if not .targetedFinancing }} prohibited {{ end }}" type="text" value="{{ .targetedFinancingThreshold }}">
+							</div>
+						</div>
+					</div>
+					<div class="settings-group">
+						<h4>Advanced</h4>
+						<div class="checkbox">
+							<label>
+								<input id="draft-order-tax" type="checkbox" {{ if .draftOrderTax }} checked {{ end }}>Use Shopify draft orders to calculate tax
+							</label>
+						</div>
+						<div class="checkbox">
+							<label>
+								<input id="bread-healthcare-mode" type="checkbox" {{ if .breadHealthcareMode }} checked {{ end }}>
+								Enable Healthcare Mode
+							</label>
+							<div id="healthcare-disclosure" style="display:{{ if .breadHealthcareMode }} block {{ else }} none {{ end }}">
+								<p>Healthcare Mode restricts Bread's access to customer information. This setting should only be enabled for merchants selling health-related products.</p>
+								<p>In the <a href="https://merchants.getbread.com" target="_blank">Bread merchant portal</a> under Checkout Settings, please include an Introduction Screen explaining that you are providing information to a third party and confirm that the modal is styled with the default Bread theme.</p>
+							</div>
+						</div>
+						<div class="checkbox">
+							<label>
+								<input id="remainder-pay-auto-cancel" type="checkbox" {{ if .remainderPayAutoCancel }} checked {{ end }}> Automatically cancel transactions with a declined remainder payment
+							</label>
+						</div>
+					</div>
+				</div>
+				<hr>
+			</div>
+			<div id="platform-section" class='{{ if ne .activeVersion "platform"}}hide{{ end }}'>
+				<div class="authentication">
+					<h2>Authentication</h2>
+					<div class="settings-group">
+						<p>We provide both production and sandbox integration keys. Please ensure sandbox key is entered if in test mode.</p>
+						<div class="checkbox">
+							<label>
+								<input id="platform-bread-test-mode" type="checkbox" {{ if .platformBreadTestMode }} checked {{ end }}> Use sandbox (test) mode
+							</label>
+						</div>
+						<div class="api-keys">
+							<div class="api-key-set">
+								<label>Live Integration Key</label>
+								<input id="integration-key" class="form-control api-key" type="text" name="integration_key" value="{{ .integrationKey }}" placeholder="Live Integration Key">
+							</div>
+							<div class="api-key-set">
+								<label>Sandbox Integration Key</label>
+								<input id="sandbox-integration-key" class="form-control api-key" type="text" name="sandbox_integration_key" value="{{ .sandboxIntegrationKey }}" placeholder="Sandbox Integration Key">
+							</div>
+						</div>
+					</div>
+				</div>
+				<hr>
+			</div>
+		</div>
+		<div class="error-screen" style="display:none;"></div>
+		<div class="error-modal" style="display:none;">
+			<h1>Session expired</h1>
+			<h3 style="margin-top:5rem;">Please restart your session by selecting <span id="app-redirect">Apps</span> and then Bread</h3>
+		</div>
+	</body>
+</html>

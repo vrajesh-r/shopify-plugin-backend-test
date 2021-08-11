@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bread POS</title>
+  <script src="https://cdn.shopify.com/s/assets/external/pos_app.js"></script>
+  <script type="text/javascript">
+    ShopifyPOS.init({
+      apiKey: {{ .ShopifyAPIKey }},
+      shopOrigin: 'https://' + {{ .ShopName }} + '.myshopify.com'
+    });
+  </script>
+  <script src="{{ .BreadJS }}" data-api-key="{{ .BreadAPIKey }}"></script>
+</head>
+<body style="background:#fff;padding:0px 24px;">
+  <div id="bread-checkout"></div>
+  <div id="message-display" style="display:block;margin:3rem 2rem;text-align:center;font-family:Helvetica;">
+    <h3 id="message-primary"></h3>
+    <h2 id="message-cta" style="margin-top:3rem;color:#4286f4;"></h2>
+  </div>
+  <script type="text/javascript">
+    ShopifyPOS.ready(function() {
+
+      const shopName = {{ .ShopName }};
+      const production = {{ .Production }};
+
+      var targetedFinancing = false;
+      {{ if .TargetedFinancing }}targetedFinancing = true;{{ end }}
+
+      var targetedFinancingID = '';
+      {{ if .TargetedFinancingID }}targetedFinancingID = '{{ .TargetedFinancingID }}';{{ end }}
+
+      var targetedFinancingThreshold = 0;
+      {{ if .TargetedFinancingThreshold }}
+      targetedFinancingThreshold = parseInt(Math.round({{ .TargetedFinancingThreshold }} * 100));
+      {{ end }}
+
+      // object to log, target HTML element
+      function logObject(o, e, pad) {
+        for (k in o) {
+          var d = document.createElement('div');
+          if (typeof o[k] === 'object') {
+            logObject(o[k], d, pad + k + '=>')
+          } else {
+            d.innerHTML = pad + k + '=>' + o[k];
+          }
+          e.append(d);
+        }
+      }
+
+      function convertToCents(amount) {
+        return parseInt(Math.round(amount * 100));
+      }
+
+      function mapShopifyItems(items) {
+        var url = 'https://' + shopName + '.myshopify.com';  // Consider fetching product details
+        return items.map(function(i) {
+          return { name: i.title+', '+i.variant_title, price: parseInt(Math.round(i.price * 100)), sku: i.product_id+';::;'+i.sku, quantity: i.quantity, detailUrl: url, imageUrl: url }
+        });
+      }
+
+      function formatPhone(phone) {
+        var digits = phone.replace(/\D/g, '');
+        return digits.length < 10 ? '' : digits.substring(digits.length - 10);
+      }
+
+      function formatContact(customer) {
+        var contact = {
+          firstName: customer.first_name,
+          lastName: customer.last_name,
+          email: customer.email
+        }
+        if (customer.phone) {
+          contact.phone = formatPhone(customer.phone);
+        }
+        if (customer.addresses && customer.addresses.length > 0) {
+          var addresses = customer.addresses;
+          contact.address = addresses[0].address1;
+          contact.address2 = addresses[0].address2;
+          contact.city = addresses[0].city;
+          contact.state = addresses[0].province_code;
+          contact.zip = addresses[0].zip;
+          if (addresses[0].phone && !contact.phone) {
+            contact.phone = formatPhone(addresses[0].phone);
+          }
+        }
+        return contact;
+      }
+
+      function formatDiscount(discount, items) {
+        if (discount.type === 'flat') {
+          return [{
+            amount: parseInt(Math.round(discount.amount * 100)),
+            description: discount.discount_description
+          }];
+        }
+        if (discount.type === 'percent') {
+          var subtotal = items.reduce(function(total, i) {
+            return total + parseInt(Math.round(i.price * 100) * i.quantity);
+          }, 0);
+          return [{
+            amount: parseInt(subtotal * discount.amount),
+            description: discount.discount_description
+          }];
+        }
+        return [];
+      }
+
+      function initializeBread(cart) {
+        var contact = '';
+        var hideShippingForm = true;
+        var discounts = [];
+        var shippingOptions = [];
+        if (cart.customer) {
+          contact = formatContact(cart.customer);
+        }
+        if (cart.cart_discount) {
+          discounts = formatDiscount(cart.cart_discount, cart.line_items);
+        }
+        var shippingCost = parseInt(Math.round((parseFloat(cart.grand_total) - (parseFloat(cart.subtotal) + parseFloat(cart.tax_total))) * 100));
+        if (shippingCost > 0) {
+          shippingOptions.push({
+            typeId: 'shopify-pos-ship',
+            type: 'Shopify POS Shipping',
+            cost: shippingCost
+          });
+          hideShippingForm = false;
+        }
+
+        var opts = {
+          formId: 'bread-checkout',
+          actAsLabel: false,
+          allowCheckout: true,
+          buttonLocation: 'shopify_pos',
+          billingContact: contact,
+          shippingContact: contact,
+          hideFieldsWhenProvided: false,
+          displayDisclosuresInline: true,
+          logoutOnCheckoutComplete: true,
+          logoutOnPhoneChanged: true,
+          customTotal: convertToCents(cart.grand_total),
+          items: mapShopifyItems(cart.line_items),
+          discounts: discounts,
+          shippingOptions: shippingOptions,
+          tax: convertToCents(cart.tax_total),
+          done: function(err, token) {
+            if(err) {
+              ShopifyPOS.flashError("Bread transaction failed - please contact Bread integrations");
+              setTimeout(function() {
+                ShopifyPOS.Modal.close();
+              }, 2000);
+              return
+            }
+            cart.addProperties({
+              breadTxId: token
+            }, {
+              success: function(cart) {
+                ShopifyPOS.flashNotice("Bread transaction successful!");
+                setTimeout(function() {
+                  ShopifyPOS.Modal.close();
+                }, 2000);
+              },
+              error: function(errors) {
+                ShopifyPOS.flashError("Failed to add Bread Tx ID to cart");
+              }
+            });
+          }
+        };
+
+        if (targetedFinancing && opts.customTotal >= targetedFinancingThreshold) {
+          opts.financingProgramId = targetedFinancingID;
+        }
+
+        bread.checkout(opts);
+      }
+
+      function showMessage(message, cta) {
+        document.querySelector('#message-primary').innerHTML = message;
+        document.querySelector('#message-cta').innerHTML = cta === undefined || cta === '' ? 'Close' : cta;
+        document.querySelector('#message-cta').addEventListener('click', function() {
+          ShopifyPOS.Modal.close();
+        });
+        document.querySelector('#message-display').style.display = 'block';
+      }
+
+      function validateCartAndCustomer(cart) {
+        var { customer } = cart;
+
+        if (cart.line_items === undefined || cart.line_items.length < 1 || cart.grand_total === 0) {
+          return ['Your cart is currently empty.', 'Continue browsing'];
+        }
+
+        if (customer === undefined) {
+          return ['Please add a customer to the order', 'Close'];
+        }
+
+        if (customer.first_name === undefined || customer.first_name === '') {
+          return ['Please provide a first name for the customer', 'Close'];
+        }
+
+        if (customer.last_name === undefined || customer.last_name === '') {
+          return ['Please provide a last name for the customer', 'Close'];
+        }
+        
+        if (customer.addresses === undefined || customer.addresses.length < 1) {
+          return ['Please provide a billing address for the customer', 'Close'];
+        }
+
+        var address = customer.addresses[0];
+
+        if (address.zip === undefined || address.zip === '') {
+          return ['Please provide a zip code with the billing address', 'Close'];
+        }
+
+        return null;
+      }
+
+      ShopifyPOS.fetchCart({
+        success: function(cart) {
+
+          var errMessage = validateCartAndCustomer(cart);
+
+          if (errMessage !== null) {
+            showMessage(...errMessage)
+            return false;
+          }
+
+          initializeBread(cart);
+        },
+        error: function(errors) {
+          ShopifyPOS.flashError("Failed to retrieve cart");
+        }
+      });
+    });
+  </script>
+</body>
+</html>

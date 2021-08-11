@@ -1,0 +1,14 @@
+enabled: true
+
+datadogEnv: {{ requiredEnv "NAMESPACE" }}
+
+sliceEnvironment:
+  migration:
+    enabled: true
+
+config:
+  kafka:
+    topicPrefix: {{ requiredEnv "NAMESPACE" | quote }}
+    broker: {{ requiredEnv "MESSAGING_KAFKA_BOOTSTRAP" | quote }}
+    key: {{ requiredEnv "MESSAGING_KAFKA_KEY" | quote }}
+    secret: {{ requiredEnv "MESSAGING_KAFKA_SECRET" | quote }}

@@ -1,0 +1,9 @@
+{{- $config := include "service.config" . | fromYaml }}
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: shopify-plugin-backend-require-jwt
+  namespace: {{ .Release.Namespace }}
+spec:
+  rules:
+  - {}

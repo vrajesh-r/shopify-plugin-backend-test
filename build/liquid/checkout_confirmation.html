@@ -1,0 +1,157 @@
+<div>
+	<style>
+	.bread-success-container {
+		padding: 20px 40px;
+	}
+	.order-info-container {
+		border-bottom: 1px solid #bdbdbd;
+		border-top: 1px solid #bdbdbd;
+		padding: 1rem 0;
+	}
+	.order-info td {
+		border: 0;
+		line-height: 1.6;
+		padding: 0;
+	}
+	.order-info td.order-info-label {
+		font-weight: bold;
+		padding-right: 1rem;
+	}
+	.order-summary-title {
+		margin-bottom: 0;
+		margin-top: 2rem;
+	}
+	.order-address-container:before, .order-address-container:after {
+		content: ' ';
+		display: table;
+	}
+	.order-address-container:after {
+		clear: both;
+	}
+	.order-address-container h4 {
+		margin: 1rem 0 0.5rem;
+	}
+	.order-address-container p {
+		margin: 0;
+	}
+	.order-billing-address, .order-shipping-address {
+		float: left;
+		line-height: 1.3;
+		width: 50%;
+	}
+	.order-items {
+		margin-top: 2rem;
+		width: 100%;
+	}
+	.order-items td {
+		border-top: 1px solid #E9E9E9;
+		padding: 1rem 0;
+		vertical-align: top;
+	}
+	.order-items span {
+		display: block;
+		font-size: 80%;
+		padding-top: 0.25rem;
+	}
+	.order-items td.order-total-labels {
+		padding-right: 1rem;
+		text-align: right;
+	}
+	.order-items td.order-total-labels, .order-items td.order-total {
+		line-height: 1.6;
+	}
+	@media (max-width: 600px) {
+		.order-billing-address, .order-shipping-address {
+			float: none;
+			width: auto;
+		}
+	}
+	</style>
+	<div class="bread-success-container">
+		<h2 class="bread-success-header">Thanks for your order, <| .BillingAddress.FirstName  |>!</h2>
+		<div class="order-info-container bread-success-order-info-container">
+			<table class="order-info bread-success-table" cellspacing="0" cellpadding="0">
+				<tr class="bread-success-table-row">
+					<td class="order-info-label">Order Number:</td>
+					<td><| .OrderNumber |></td>
+				</tr>
+				<tr class="bread-success-table-row">
+					<td class="order-info-label">Purchase Date:</td>
+					<td><| .CreatedAt |></td>
+				</tr>
+				<tr class="bread-success-table-row">
+					<td class="order-info-label">Billing Email:</td>
+					<td><| .Email |></td>
+				</tr>
+			</table>
+		</div>
+		<h3 class="order-summary-title bread-success-header">Order Summary</h3>
+		<div class="order-address-container bread-success-address-container">
+			<div class="order-billing-address">
+		     		<h4 class="bread-success-sub-header">Billing Address</h4>
+				<p class="bread-success-paragraph">
+					<| .BillingAddress.Name |><br>
+					<| .BillingAddress.Address1 |><br>
+					<| if .BillingAddress.Address2 |><| .BillingAddress.Address2 |><br><| end |>
+					<| .BillingAddress.City |>, <| .BillingAddress.Province |> &nbsp;<| .BillingAddress.Zip |><br>
+					<| .BillingAddress.CountryName |>
+				</p>
+			</div>
+			<div class="order-shipping-address">
+				<h4 class="bread-success-sub-header">Shipping Address</h4>
+				<p class="bread-success-paragraph">
+					<| .ShippingAddress.Name |><br>
+					<| .ShippingAddress.Address1 |><br>
+					<| if .ShippingAddress.Address2 |><| .ShippingAddress.Address2 |><br><| end |>
+					<| .ShippingAddress.City |>, <| .ShippingAddress.Province |> &nbsp;<| .ShippingAddress.Zip |><br>
+					<| .ShippingAddress.CountryName |>
+				</p>
+			</div>
+		</div>
+		<div class="bread-success-itemization-container">
+			<table class="order-items bread-success-table" cellspacing="0" cellpadding="0">
+	       			<| range $index, $el := .LineItems |>
+	       			<tr class="bread-success-table-row">
+					<td><| $el.Quantity |></td>
+					<td><| $el.Name |><span><| $el.VariantTitle |></span></td>
+					<td>$ <| $el.Price |></td>
+				</tr>
+				<| end |>
+				<tr class="bread-success-table-row">
+					<td></td>
+					<td class="order-total-labels">
+						Item Subtotal:<br>
+						Tax:<br>
+						Shipping:<br>
+						<strong>Total:</strong>
+					</td>
+					<td class="order-total">
+						$ <| .TotalLineItemsPrice |><br>
+						$ <| .TotalTax |><br>
+						$ <| .TotalShipping |><br>
+						<strong>$ <| .TotalPrice |></strong>
+					</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+</div>
+<script>
+	var BreadOrder = {
+		orderNumber: "<| .OrderNumber |>",
+		subtotal: <| .TotalLineItemsPrice |>,
+		tax: <| .TotalTax |>,
+		totalPrice: <| .TotalPrice |>,
+
+	};
+	BreadOrder.lineItems = [
+		<| range $i, $item := .LineItems |>{
+			name: "<| $item.Name |>",
+			quantity: <| $item.Quantity |>,
+			price: <| $item.Price |>,
+			productId: "<| $item.ProductID |>",
+			sku: "<| $item.Sku |>",
+			variantId: "<| $item.VariantID |>",
+		},<| end |>
+	];
+</script>

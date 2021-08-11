@@ -1,0 +1,330 @@
+<html>
+	<head>
+		<script src="https://cdn.shopify.com/s/assets/external/app.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+		<script>
+		ShopifyApp.init({
+			apiKey: {{ .apiKey }},
+			shopOrigin: "https://" + {{ .shopName }} + ".myshopify.com"
+		});
+		ShopifyApp.ready(function(){
+			ShopifyApp.Bar.loadingOff();
+			ShopifyApp.Bar.initialize({
+				title: 'Draft Order: {{ .draftOrder.ID }}',
+				buttons: {
+					secondary: [{
+						label: "Navigate",
+						type: "dropdown",
+						links: [{
+							label: "Settings",
+							href: "/portal/settings",
+							target: "app"
+						}, {
+							label: "Draft Orders",
+							href: "/portal/draftorders",
+							target: "app"
+						}]
+					}]
+				}
+			});
+		});
+		$(document).ready(function() {
+			// Cache selectors
+			var cartUrlContainer = document.querySelector('#cart-url-container');
+			$("#viewDraftOrder").click(function() {
+				ShopifyApp.redirect("/admin/draft_orders/{{ .draftOrder.ID }}")
+			});
+			{{ if .hasDraftOrderCart }}
+			$("#sendText").click(function() {
+				// Validate input
+				var phoneNumber = $("#text-phone-number").val();
+				if (typeof phoneNumber != "string" || phoneNumber.length < 10) {
+					ShopifyApp.flashError("Phone number is invalid. Please include the area code.");
+					return
+				}
+				
+				// Hit text endpoint
+				ShopifyApp.Bar.loadingOn();
+				$.ajax({
+					"type": "POST",
+					"url": "/portal/draftorder/cart/text",
+					"data": JSON.stringify({
+						"cartId": "{{ .draftOrderCart.CartID }}",
+						"phone": phoneNumber
+					}),
+					"dataType": "json",
+					"contentType": "application/json; charset=utf-8",
+					"success": function(data) {
+						ShopifyApp.Bar.loadingOff();
+						ShopifyApp.flashNotice("Text sent successfully!");
+					},
+					"error": function(err) {
+						ShopifyApp.Bar.loadingOff();
+						ShopifyApp.flashError("Sending text email failed. Please refresh and try again.");
+					}
+				});		
+			});
+			$("#sendBreadEmail").click(function() {
+				// Validate input
+				var emailAddress = $("#email-address").val();
+				if (typeof emailAddress != "string" || emailAddress.length < 1) {
+					ShopifyApp.flashError("Email address is invalid. Please include a complete email address.");
+					return
+				}
+				var emailName = $("#email-name").val();
+				if (typeof emailName != "string" || emailName.length < 1) {
+					ShopifyApp.flashError("Name for email is invalid. Please include the customer's full name.");
+					return
+				}
+				
+				// Hit email endpoint
+				ShopifyApp.Bar.loadingOn();				
+				$.ajax({
+					"type": "POST",
+					"url": "/portal/draftorder/cart/email",
+					"data": JSON.stringify({
+						"cartId": "{{ .draftOrderCart.CartID }}",
+						"email": emailAddress,
+						"name": emailName
+					}),
+					"dataType": "json",
+					"contentType": "application/json; charset=utf-8",
+					"success": function(data) {
+						ShopifyApp.Bar.loadingOff();
+						ShopifyApp.flashNotice("Email sent successfully!");
+					},
+					"error": function(err) {
+						ShopifyApp.Bar.loadingOff();
+						ShopifyApp.flashError("Sending cart email failed. Please refresh and try again.");
+					}
+				});		
+			});
+			// Save to clipboard
+			$("#cart-url-copy").click(function() {
+				function blurAll(){
+					var tmp = document.createElement("input");
+					cartUrlContainer.appendChild(tmp);
+					tmp.focus();
+					cartUrlContainer.removeChild(tmp);
+				}
+				$("#cart-url").select();
+				document.execCommand("copy");
+				blurAll();
+				ShopifyApp.flashNotice('Copied cart link to clipboard');
+			});
+			{{ else }}
+			$("#createDraftOrderCart").click(function() {	
+				$.ajax({
+					"type": "POST",
+					"url": "/portal/draftorder/cart",
+					"data": JSON.stringify({
+						"draftOrderId": parseInt("{{ .draftOrder.ID }}")
+					}),
+					"dataType": "json",
+					"contentType": "application/json; charset=utf-8",
+					"success": function(data) {
+						ShopifyApp.Bar.loadingOff();
+						window.location.href = "/portal/draftorder/{{ .ID }}";
+						window.location.reload(true);
+					},
+					"error": function(err) {
+						ShopifyApp.Bar.loadingOff();
+						if (err.responseJSON && err.responseJSON.error)
+							ShopifyApp.flashError(err.responseJSON.error);
+						else
+							ShopifyApp.flashError("Creating Bread cart failed. Please refresh and try again.");
+					}
+				});
+			});
+			{{ end }}
+		});
+		</script>
+		<style>
+		html {
+			font-family: "ProximaNovaLight", "Helvetica Neue", Helvetica, Arial, sans-serif;
+			font-weight: 400;
+		}
+		body {
+			background: #f4f6f8;
+			padding: 16px 24px;
+		}
+		header {
+			padding-bottom: 8px;
+		}
+		label {
+			font-size: 12px;
+			text-transform: uppercase;
+		}
+		.return-link {
+			background: #f4f6f8;
+			border: none;
+			border-radius: 3px;
+			color: #637381;
+			height: 32px;
+			outline: none;
+			padding: 0 4px 0 0;
+		}
+		.return-link:active, .return-link:focus {
+			background: rgba(33,43,54,0.1);
+		}
+		.return-link:hover {
+			color: #212b36;
+		}
+		.return-link > .glyphicon {
+			position: relative;
+			top: 1px;
+			margin-right: 4px;
+		}
+		.panel {
+			background: #fff;
+			border-radius: 3px;
+			box-shadow: 0 0 0 1px rgba(63,63,68,0.05), 0 1px 3px 0 rgba(63,63,68,0.15);
+			padding-top: 1rem;
+			padding-bottom: 3rem;
+		}
+		.title {
+			margin-top: 0;
+		}
+		.button-help {
+			display: inline-block;
+			position: relative;
+			top: 1px;
+			margin-left: 1rem;
+			color: #777;
+		}
+
+		.pad-left {
+			padding-left: 20px;
+		}
+
+		.half-width {
+			min-width: 300px;
+			width: 50%;
+		}
+
+		#cart-url-container {
+			width: 100%;
+			height: 3rem;
+		}
+
+		#cart-url-container label {
+			vertical-align: middle;
+		}
+
+		#cart-url {
+			height: 100%;
+			padding: 0px 8px;
+			font-size: 1.4rem;
+			vertical-align: top;
+		}
+		#cart-url-copy-icon {
+			height: 16px;
+			width: 16px;
+			background: url(https://cdn2.iconfinder.com/data/icons/management-stroke/512/copy-512.png);
+			background-size: contain;
+			background-repeat: no-repeat;
+			background-position: center;
+		}
+		</style>
+	</head>
+	<body>
+		<header class="container-fluid">
+			<button id="viewDraftOrder" class="return-link"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span>Back to Draft Order</button>
+		</header>
+		<div class="container-fluid">
+			<h2 class="title">{{ .draftOrder.Name }}</h2>
+
+			<div class="row">
+				<div class="col-md-7">
+					<div class="container-fluid panel">
+						<h4>Bread Cart</h4>
+						<hr>
+						{{ if not .hasDraftOrderCart }}
+						No Bread carts associated with this Shopify draft order.
+						<br>
+						<br>
+						<button id="createDraftOrderCart" class="btn btn-primary">Create Bread Cart</button>
+						{{ else }}
+						<label>Cart Link</label>
+						<div id="cart-url-container">
+							<input id="cart-url" class="form-control" type="text" value="{{ .draftOrderCart.CartURL }}" readonly>
+						</div>
+						<br>
+						<button id="cart-url-copy" class="btn btn-primary">Copy to Clipboard</button>
+						<hr>
+						<label>Name</label>
+						<input id="email-name" class="form-control" type="text" name="name" value="{{  .draftOrder.Customer.FirstName}} {{ .draftOrder.Customer.LastName }}" placeholder="Customer Name">
+						<br>
+						<label>Email</label>
+						<br>
+						<input id="email-address" class="form-control" type="text" name="email" value="{{ .draftOrder.Customer.Email }}" placeholder="Email Address">
+						<br>
+						<button id="sendBreadEmail" class="btn btn-primary">Email Cart Link</button>
+						<p class="button-help">Send Cart link to the customer via email</p>
+						<hr>
+						<label>Phone Number</label>
+						<input id="text-phone-number" class="form-control" type="text" name="phone"  value="{{ .draftOrder.BillingAddress.Phone }}"placeholder="Phone Number">
+						<br>
+						<button id="sendText" class="btn btn-primary">Text Cart Link</button>
+						<p class="button-help">Send Cart link to the customer via SMS</p>
+						{{ end }}
+					</div>
+				</div>
+				<div class="col-md-5">
+					<div class="container-fluid panel">
+						<h4>Draft order details</h4>
+						<hr>
+						<label>Customer</label>
+						<br>
+						<div class="container-fluid">
+							<label>ID</label> {{ .draftOrder.Customer.ID}}
+							<br>
+							<label>Name</label> {{ .draftOrder.Customer.FirstName}} {{ .draftOrder.Customer.LastName }}
+							<br>
+							<label>Email</label> {{ .draftOrder.Customer.Email}}
+							<br>
+						</div>
+						<label>Shipping Address</label>
+						<br>
+						<div class="container-fluid">
+							<label>Address1</label> {{ .draftOrder.ShippingAddress.Address1  }}
+							<br>
+							<label>Address2</label> {{ .draftOrder.ShippingAddress.Address2  }}
+							<br>
+							<label>City</label> {{ .draftOrder.ShippingAddress.City }}
+							<br>
+							<label>Zip</label> {{ .draftOrder.ShippingAddress.Zip }}
+							<br>
+							<label>Country</label> {{ .draftOrder.ShippingAddress.Country }}
+							<br>
+							<label>Phone</label> {{ .draftOrder.ShippingAddress.Phone }}
+							<br>
+						</div>
+						<label>Items</label>
+						{{ range .draftOrder.LineItems }}
+						<br>
+						<div class="container-fluid">
+							<label>Product ID</label> {{ .ProductID }}
+							<br>
+							<label>Variant ID</label> {{ .VariantID }}
+							<br>
+							<label>Name</label> {{ .Name }}
+							<br>
+							<label>Price</label> ${{ .Price }}
+							<br>
+							<label>Quantity</label> {{ .Quantity }}
+						</div>
+						<br>
+						{{ end }}
+					</div>
+				</div>
+			</div>
+		</div>
+		<br>
+		<br>
+		<br>
+	</body>
+</html>

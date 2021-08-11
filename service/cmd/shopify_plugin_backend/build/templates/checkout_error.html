@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gateway Checkout Error</title>
+</head>
+<body>
+  <style>
+    @import url('https://fonts.googleapis.com/css?family=Nunito+Sans:400,700');
+    body {
+      font-size: 16px;
+      font-family: 'Nunito Sans', Helvetica, sans-serif;
+      color: #222;
+      line-height: 1.5;
+    }
+    header {
+      height: 4rem;
+    }
+    a {
+      color: #5156ea;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    a:hover {
+      color: #222;
+    }
+    .main-content {
+      padding: 3rem 2rem;
+      text-align: center;
+      font-size: 0.6rem;
+    }
+    .message {
+      margin: 0 0 4rem 0;
+    }
+    .message h1, .message h2 {
+      margin: 1.5rem 0;
+    }
+    .return > a {
+      font-size: 1.5rem;
+    }
+    @media ALL and (min-width:768px) {
+      .main-content {
+        font-size: 0.7rem;
+      }
+    }
+    @media ALL and (min-width:960px) {
+      .main-content {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+  <header></header>
+  <div class="main-content">
+    <div class="message">
+      <h1>{{ .messagePrimary }}</h1>
+      {{ if .link }}<a href="{{ .link }}">{{ end }}
+      <h2>{{ .messageSecondary }}</h2>
+      {{ if .link }}</a>{{ end }}
+    </div>
+    {{ if .cancel }}
+    <div class="return">
+      <a href="{{ .cancel }}">&larr; Return to shopping cart</a>
+    </div>
+    {{ end }}
+  </div>
+</body>
+</html>

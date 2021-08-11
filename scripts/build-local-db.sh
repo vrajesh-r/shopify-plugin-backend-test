@@ -1,0 +1,2 @@
+#!/bin/sh
+(psql -d "dbname=shopify user=postgres password=mooncakes port=5432 host=localhost" -c 'select 1'  &>/dev/null) && echo "database already exists" || psql -d "user=postgres password=mooncakes port=5432 host=localhost" -c "CREATE DATABASE shopify;"

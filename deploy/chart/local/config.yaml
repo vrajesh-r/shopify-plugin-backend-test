@@ -1,0 +1,59 @@
+grpc:
+  host: localhost
+  port: 9000
+http:
+  host: localhost
+  port: 8000
+  readTimeout: 5s
+  writeTimeout: 5s
+  shutdownTimeout: 5s
+service:
+  name: shopify-plugin-backend
+  sandbox: true
+  tracingEnabled: true
+postgres:
+  user: postgres
+  password: mooncakes
+  database: shopify
+  host: localhost
+  port: 5432
+environment: local
+dockerfile: doesntgetusedithink
+host: localhost
+feHost: https://localhost:8001
+serveferoutes: true
+gatewaytenant: rbc
+dbexposedport: 5432
+miltonport: 7800
+avalarakey:
+HostConfig:
+  MiltonHost: https://milton.ngrok.io
+  BreadHost: https://api.getbread.com
+  BreadHostLocal: https://api-sandbox.getbread.com
+  BreadHostDevelopment: https://api-sandbox.getbread.com
+  CheckoutHost: https://checkout.getbread.com
+  CheckoutHostDevelopment: https://checkout-sandbox.getbread.com
+  CheckoutHostLocal: https://checkout-sandbox.getbread.com
+  PlatformCheckoutHost: https://connect-preview.rbc.breadpayments.com
+  PlatformCheckoutHostDevelopment: https://connect-preview.rbc.breadpayments.com
+ShopifyConfig:
+  ShopifyApiVersion: 2020-07
+  ShopifyApiKey:
+  ShopifySharedSecret:
+SendgridClient:
+  SendgridMiltonApiKey:
+  SendgridMiltonPasswordResetTemplate: 3144416a-9e2c-4711-81e1-da8883fb0648
+FeatureFlag:
+  ClientSideID:
+  ClientSideKey:
+  ClientInitTimeout:
+AdminAuth:
+  OauthClientId:
+  OauthClientSecret:
+  AdminSessionSecret:
+TransactionService:
+  TransactionServiceHost: https://api.rbcpayplan.com
+  TransactionServiceHostDevelopment: https://api-preview.rbc.breadpayments.com
+RedisConfig:
+  URL: localhost:6381
+  Password:

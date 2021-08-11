@@ -1,0 +1,29 @@
+[90m13:50:04[0m [32mINF[0m Slice [36mversion=[0m0.2.2
+[90m13:50:04[0m [32mINF[0m Refreshing current environment... [36menvironment=[0mslice-vraj-test
+[90m13:50:06[0m [32mINF[0m Starting telepresence...
+[90m13:50:06[0m [32mINF[0m Starting telepresence...
+Slice development container started
+T: Warning: kubectl 1.21.2 may not work correctly with cluster version 1.18.20-eks-8c579e due to the version discrepancy. See https://kubernetes.io/docs/setup/version-skew-policy/ for more information.
+
+T: Using a Pod instead of a Deployment for the Telepresence proxy. If you experience problems, please file an issue!
+T: Set the environment variable TELEPRESENCE_USE_DEPLOYMENT to any non-empty value to force the old behavior, e.g.,
+T:     env TELEPRESENCE_USE_DEPLOYMENT=1 telepresence --run curl hello
+
+T: Starting network proxy to cluster by swapping out Deployment shopify-plugin-backend-v0 with a proxy Pod
+T: Setup complete. Launching your container.
+T: Your process exited with return code 143.
+T: Exit cleanup in progress
+T: Cleaning up Pod
+Error: waiting for bash to exit: exit status 143
+Usage:
+  slice start [flags]
+
+Flags:
+  -h, --help   help for start
+
+Global Flags:
+      --config string   path to the config file (default "/localhost/.slice/config.yaml")
+  -v, --verbose         verbose log output
+
+[90m13:55:58[0m [1m[31mERR[0m[0m Command failed. [31merror=[0m[31m"waiting for bash to exit: exit status 143"[0m
+[90m13:55:58[0m [1m[31mERR[0m[0m See logs for additional information and errors.

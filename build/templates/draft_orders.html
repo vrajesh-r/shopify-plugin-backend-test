@@ -1,0 +1,102 @@
+<html>
+	<head>
+		<!-- <link href="css/seaff.css" rel="stylesheet" type="text/css"> -->
+
+		<script src="https://cdn.shopify.com/s/assets/external/app.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+		<script type="text/javascript">
+		ShopifyApp.init({
+			apiKey: {{ .apiKey }},
+			shopOrigin: "https://" + {{ .shopName }} + ".myshopify.com"
+		});
+		ShopifyApp.ready(function(){
+			ShopifyApp.Bar.loadingOff();
+			ShopifyApp.Bar.initialize({
+				title: 'Draft Orders',
+				buttons: {
+					secondary: [{
+						label: "Navigate",
+						type: "dropdown",
+						links: [{
+							label: "Settings",
+							href: "/portal/settings",
+							target: "app"
+						}]
+					}]
+				},
+				pagination: {
+					{{ if .nextPageExists }}
+					next: {
+						href: "/portal/draftorders?page={{ .nextPage }}"
+					},
+					{{ end }}
+					{{ if .previousPageExists }}
+					previous: {
+						href: "/portal/draftorders?page={{ .previousPage }}"
+					}
+					{{ end }}
+				}
+			});
+		});
+		$(document).ready(function() {
+			{{ range .draftOrders }}
+			$("#{{ .ID }}").click(function() {
+				window.location.href = "/portal/draftorder/{{ .ID }}";	
+			});
+			{{ end }}
+		});
+		</script>
+		<style>
+		html {
+			font-family: "ProximaNovaLight", "Helvetica Neue", Helvetica, Arial, sans-serif;
+			font-weight: 300;
+			background-color: #ffffff;
+		}
+
+		.pad-left {
+			padding-left: 20px;
+		}
+
+		.half-width {
+			min-width: 300px;
+			width: 50%;
+		}
+		.draft-order-container {
+			border: 1px solid black;
+		}
+		</style>
+	</head>
+
+	<body>
+		<div class="container-fluid">
+			<h2>Draft Orders</h2>
+			<br>
+
+			{{ range .draftOrders }}
+			<div class="container-fluid draft-order-container">
+				<br>
+				<label>ID:</label> {{ .ID }}
+				<br>
+				<label>Draft Order Name:</label> {{ .Name }}
+				<br>
+				<label>Total Price:</label> ${{ .TotalPrice }}
+				<br>
+				<label>Customer Email:</label> {{ .Customer.Email }}
+				<br>
+				<label>Customer Name:</label> {{ .Customer.FirstName }} {{ .Customer.LastName }}
+				<br>
+				<label>Customer Address:</label> {{ .Customer.DefaultAddress.Address1  }} {{ .Customer.DefaultAddress.Address2  }} {{ .Customer.DefaultAddress.City  }}, {{ .Customer.DefaultAddress.Province }} {{ .Customer.DefaultAddress.Zip }}
+				<br>
+				<button id="{{ .ID }}">View</button>
+				<br>
+				<br>
+			</div>
+			<br>
+			<br>
+			{{ end }}
+		</div>
+	</body>
+</html>

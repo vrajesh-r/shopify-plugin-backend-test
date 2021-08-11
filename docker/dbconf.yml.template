@@ -1,0 +1,6 @@
+development:
+  driver: postgres
+  open: host=localhost user=postgres dbname=shopify sslmode=disable password=mooncakes
+$ENV:
+  driver: postgres
+  open: host=$DB_HOST user=$DB_USER dbname=$DB_DATABASE sslmode=disable password=$DB_PASSWORD

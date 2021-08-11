@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bread Platform Embedded Checkout</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        font-size: 14px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+          "Segoe UI Symbol", sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #fff;
+        line-height: 1.3em;
+      }
+
+      .container {
+        height: 100%;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .content {
+        display: flex;
+        width: 100%;
+        margin: 0 auto;
+        max-width: 40em;
+        zoom: 1;
+        flex: 1 0 auto;
+      }
+
+      @media (min-width: 1000px) {
+        .content {
+          flex-direction: row;
+          width: 80%;
+          max-width: 80em;
+        }
+      }
+
+      @media (max-width: 999px) {
+        .content {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 0 1em;
+          overflow-x: hidden;
+          flex-direction: column;
+        }
+      }
+
+      #mobile-banner {
+        display: block;
+        padding: 1.5em 1em;
+        border-bottom: 1px solid #e6e6e6;
+      }
+
+      @media (min-width: 1000px) {
+        #mobile-banner {
+          display: none;
+        }
+      }
+
+      #desktop-banner {
+        padding-bottom: 2em;
+      }
+
+      @media (max-width: 999px) {
+        #desktop-banner {
+          display: none;
+        }
+      }
+
+      .logo-text {
+        color: #333333;
+        font-size: 1.73em;
+      }
+
+      @media (min-width: 1000px) {
+        .logo-text {
+          font-size: 2em;
+        }
+      }
+
+      @media (min-width: 1000px) {
+        #bread-checkout,
+        .cart-items-wrapper {
+          padding-top: 4em;
+        }
+      }
+
+      #bread-checkout {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        flex: 1 0 auto;
+      }
+
+      @media (min-width: 1000px) {
+        #bread-checkout {
+          width: 52%;
+          margin-right: 6%;
+          border: none;
+        }
+      }
+
+      @media (max-width: 999px) {
+        #bread-checkout {
+          padding-top: 1.5em;
+          border: 1px 0 rgb(225, 225, 225);
+        }
+      }
+
+      #main {
+        flex: 1 0 auto;
+      }
+
+      @media (min-width: 1000px) {
+        .cart-items-wrapper {
+          width: 38%;
+          padding-left: 4%;
+          border-left: 1px solid rgb(225, 225, 225);
+        }
+      }
+
+      .cart-items-wrapper {
+        background: #fafafa;
+        position: relative;
+      }
+
+      @media (min-width: 1000px) {
+        .cart-items-wrapper::after {
+          left: 0;
+          background-position: left top;
+          box-shadow: 1px 0 0 #e1e1e1 inset;
+          background: #fafafa;
+          width: 300%;
+          position: absolute;
+          bottom: 0;
+          z-index: -1;
+          top: 0;
+          content: "";
+          display: block;
+        }
+      }
+
+      .wrap {
+        padding: 0 1em;
+      }
+
+      #placement-checkout {
+        background-clip: padding-box;
+        border: 1px solid rgb(217 217 217);
+        border-radius: 5px;
+        text-align: center;
+      }
+
+      @media (min-width: 1000px) {
+        #placement-checkout {
+          padding: 1em;
+        }
+      }
+
+      .lds-ring {
+        display: inline-block;
+        position: relative;
+        width: 64px;
+        height: 64px;
+      }
+      .lds-ring div {
+        box-sizing: border-box;
+        display: block;
+        position: absolute;
+        width: 51px;
+        height: 51px;
+        margin: 6px;
+        border: 6px solid rgb(81, 86, 234);
+        border-radius: 50%;
+        animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+        border-color: rgb(81, 86, 234) transparent transparent transparent;
+      }
+      .lds-ring div:nth-child(1) {
+        animation-delay: -0.45s;
+      }
+      .lds-ring div:nth-child(2) {
+        animation-delay: -0.3s;
+      }
+      .lds-ring div:nth-child(3) {
+        animation-delay: -0.15s;
+      }
+      @keyframes lds-ring {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .separator {
+        width: 100%;
+        height: 1px;
+        background: rgb(225, 225, 225);
+      }
+
+      .centered {
+        text-align: center;
+        position: absolute;
+        top: 35%;
+        left: 45%;
+      }
+
+      @media (min-width: 1000px) {
+        .centered {
+          left: 50%;
+        }
+      }
+
+      .total {
+        padding-bottom: 1.5em;
+        padding-top: 1.5em;
+      }
+
+      .subtotal-lines {
+        padding-top: 1.5em;
+        padding-bottom: 1.5em;
+      }
+
+      .total,
+      .subtotal-lines {
+        display: flex;
+        justify-content: space-between;
+        color: rgb(50, 50, 50);
+        font-size: 1em;
+        flex-wrap: wrap;
+      }
+      .total > div,
+      .subtotal-lines > div {
+        flex: 1;
+      }
+      .total .total-label {
+        margin-top: 0.2em;
+        font-size: 1.15em;
+      }
+      .total .currency {
+        color: rgb(113, 113, 113);
+        font-size: 0.8em;
+        margin-right: 0.5em;
+      }
+
+      .total .total-price {
+        font-size: 1.7em;
+        font-weight: 500;
+      }
+
+      br.clear {
+        width: 100%;
+        content: " ";
+        padding-bottom: 0.75em;
+      }
+
+      .right {
+        text-align: right;
+      }
+
+      .line-items {
+        padding-top: 1.5em;
+        padding-bottom: 1.5em;
+      }
+
+      .line-item {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        font-size: 1em;
+      }
+      .line-item-title {
+        flex: 1;
+        padding-left: 1rem;
+        display: flex;
+        flex-flow: row;
+        align-items: center;
+        font-weight: 500;
+      }
+
+      .line-item-image {
+        border: 1px solid rgb(229, 229, 229);
+        border-radius: 5px;
+        position: relative;
+        width: 4.6em;
+        height: 4.6em;
+      }
+
+      .line-item-image .image-thumbnail {
+        margin: auto;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+      }
+
+      .line-item-image .line-item-image-count {
+        width: 20px;
+        height: 20px;
+        text-align: center;
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        border-radius: 20px;
+        background: rgb(128, 128, 128);
+        color: #fff;
+        padding-top: 1px; /* Better vertical centering */
+      }
+
+      .line-item-price {
+        display: flex;
+        flex-flow: row;
+        align-items: center;
+      }
+
+      .hidden {
+        visibility: hidden;
+      }
+
+      .cancel-checkout-container {
+        margin-top: 2em;
+        margin-bottom: 2em;
+      }
+
+      @media (max-width: 999px) {
+        .cancel-checkout-container {
+          width: 100%;
+          text-align: center;
+        }
+      }
+
+      .cancel-checkout-container a {
+        text-decoration: none;
+        color: #197bbd;
+      }
+
+      .accordionWrapper {
+        border-bottom: 1px solid #e6e6e6;
+        display: flex;
+        justify-content: center;
+        background: #fafafa;
+      }
+
+      .accordionItem {
+        float: left;
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        font-family: "Open-sans", Arial, sans-serif;
+        max-width: 40em;
+        padding: 0 1em;
+      }
+      .accordionItemHeading {
+        cursor: pointer;
+        border-bottom: 1px solid #e6e6e6;
+        padding: 1.25em 0;
+        -webkit-flex-shrink: 0;
+        -ms-flex-negative: 0;
+        flex-shrink: 0;
+        text-align: left;
+        width: 100%;
+      }
+
+      .order-summary-toggle-icon-wrapper,
+      .order-summary-toggle-text-wrapper,
+      .order-summary-toggle-total-wrapper {
+        display: table-cell;
+      }
+
+      .order-summary-toggle-icon,
+      .order-summary-toggle-dropdown {
+        fill: #197bbd;
+      }
+
+      .order-summary-toggle-icon-wrapper {
+        vertical-align: middle;
+        padding-right: 0.75em;
+        white-space: nowrap;
+      }
+
+      .order-summary-toggle-text-wrapper {
+        vertical-align: middle;
+        width: 100%;
+      }
+
+      .order-summary-toggle-text-wrapper {
+        color: #135e90;
+      }
+
+      .order-summary-toggle-total {
+        font-size: 1.2em; !important
+      }
+
+      .close .accordionItemContent {
+        height: 0px;
+        transition: height 1s ease-out;
+        -webkit-transform: scaleY(0);
+        -o-transform: scaleY(0);
+        -ms-transform: scaleY(0);
+        transform: scaleY(0);
+        float: left;
+        display: block;
+      }
+
+      .open .accordionItemContent {
+        width: 100%;
+        display: block;
+        -webkit-transform: scaleY(1);
+        -o-transform: scaleY(1);
+        -ms-transform: scaleY(1);
+        transform: scaleY(1);
+        -webkit-transform-origin: top;
+        -o-transform-origin: top;
+        -ms-transform-origin: top;
+        transform-origin: top;
+
+        -webkit-transition: -webkit-transform 0.4s ease-out;
+        -o-transition: -o-transform 0.4s ease;
+        -ms-transition: -ms-transform 0.4s ease;
+        transition: transform 0.4s ease;
+        box-sizing: border-box;
+      }
+
+      .footer {
+        padding: 1em 0;
+        border-top: 1px solid #e6e6e6;
+      }
+
+      .copyright-text {
+        font-size: 0.85em;
+        color: #737373;
+        line-height: 1.5em;
+        margin: 0;
+      }
+
+      .hide {
+        display: none;
+      }
+
+      @media (max-width: 999px) {
+        .desktop-only {
+          display: none;
+        }
+
+        .mobile-only {
+          display: flex;
+        }
+      }
+
+      @media (min-width: 1000px) {
+        .desktop-only {
+          display: block;
+        }
+
+        .mobile-only {
+          display: none;
+        }
+      }
+    </style>
+    <script>
+      // Clear `/test` from the URL
+      history.replaceState({}, "checkout", "/gateway/checkout/");
+    </script>
+    <script src="{{ .BreadJS }}"></script>
+
+    <script>
+      (function (h, o, u, n, d) {
+        h = h[d] = h[d] || {
+          q: [],
+          onReady: function (c) {
+            h.q.push(c);
+          },
+        };
+        d = o.createElement(u);
+        d.async = 1;
+        d.src = n;
+        n = o.getElementsByTagName(u)[0];
+        n.parentNode.insertBefore(d, n);
+      })(
+        window,
+        document,
+        "script",
+        "https://www.datadoghq-browser-agent.com/datadog-logs.js",
+        "DD_LOGS"
+      );
+      DD_LOGS.onReady(function () {
+        DD_LOGS.init({
+          clientToken: "{{ .DatadogToken }}",
+          site: "{{ .DatadogSite }}",
+          env: "{{ .Env }}",
+          forwardErrorsToLogs: true,
+          sampleRate: 100,
+          service: "milton",
+        });
+      });
+    </script>
+    <script>
+      const shopifyCheckoutID = "{{ .ShopifyCheckoutID }}";
+      const myShopifySubdomain = "{{ .MyShopifySubdomain }}";
+      const shopName = "{{ .ShopName}}";
+      const cancelURL = "{{ .CancelURL }}"
+      const customTotal = {{ .CustomTotal }}
+
+      let queryInterval;
+      let queryCount = 0;
+
+      function datadogLog(level, message, context) {
+        DD_LOGS.onReady(function () {
+          switch (level) {
+            case "error":
+              DD_LOGS.logger.error(message, context);
+              break;
+            case "warn":
+              DD_LOGS.logger.warn(message, context);
+              break;
+            case "info":
+              DD_LOGS.logger.info(message, context);
+              break;
+            default:
+              DD_LOGS.logger.debug(message, context);
+          }
+        });
+      }
+
+      function renderToEl(selector, content) {
+        const els = document.querySelectorAll(selector);
+        els.forEach((el) => {
+          el.innerHTML = content;
+        });
+      }
+
+      function appendToElements(selector, content) {
+        const els = document.querySelectorAll(selector);
+        els.forEach((el) => {
+          el.innerHTML = el.innerHTML + content;
+        });
+      }
+
+      function clearQueryInterval() {
+        clearInterval(queryInterval);
+      }
+
+      function removeHidden() {
+        // Remove hidden class name from elements
+        const hiddenEls = document.querySelectorAll(".hidden");
+        Array.prototype.forEach.call(hiddenEls, (el) => {
+          el.className = el.className.replace("hidden", "");
+        });
+      }
+
+      function removeLoading() {
+        // Remove loader
+        const loaders = document.querySelectorAll(".lds-ring");
+        loaders.forEach((loader) => {
+          loader.parentNode.removeChild(loader);
+        });
+      }
+
+      // @todo We will want to review this -- floating point math in JS
+      function sumShipping(shippingLines) {
+        return shippingLines.reduce(
+          (acc, line) => (acc += parseFloat(line.price)),
+          0
+        );
+      }
+
+      function fetchProductImages(lineItems) {
+        return Promise.all(
+          lineItems.map((item) =>
+            fetch(
+              "/gateway/product/images/" +
+                myShopifySubdomain +
+                "/" +
+                item.product_id
+            ).then((resp) => resp.json())
+          )
+        );
+      }
+
+      function to2DP(numericStr) {
+        return parseFloat(numericStr).toFixed(2);
+      }
+
+      function renderCheckout(checkout) {
+        const moneySign = checkout.presentment_currency === "USD" ? "$" : "";
+
+        renderToEl(".currency", checkout.presentment_currency);
+        renderToEl(
+          ".total-price",
+          `${moneySign}${to2DP(checkout.total_price)}`
+        );
+        renderToEl(
+          ".subtotal",
+          `${moneySign}${to2DP(checkout.subtotal_price)}`
+        );
+        renderToEl(
+          ".shipping-total",
+          `${moneySign}${to2DP(sumShipping(checkout.shipping_lines))}`
+        );
+        renderToEl(".taxes-total", `${moneySign}${to2DP(checkout.total_tax)}`);
+
+        const lineItems = [].concat(checkout.line_items || []);
+
+        const lineItemRenders = checkout.line_items.map((item) => {
+          return `
+            <div class="line-item">
+              <div class="line-item-image ${item.product_id}">
+                <img  class="image-${item.product_id} image-thumbnail" />
+                <span class="line-item-image-count">${item.quantity}</span>
+              </div>
+              <div class="line-item-title">${item.title}</div>
+              <div class="line-item-price right">${moneySign}${to2DP(
+            item.price
+          )}</div>
+              <br class="clear" />
+            </div>
+          `;
+        });
+
+        renderToEl(".line-items", lineItemRenders.join(""));
+
+        fetchProductImages(checkout.line_items)
+          .then((lineItemImages) => {
+            lineItemImages.forEach((lineItemImage) => {
+              const image = lineItemImage.images[0];
+              const els = document.getElementsByClassName(
+                `image-${image.product_id}`
+              );
+              for (let i = 0; i < els.length; i++) {
+                els[i].src = image.src;
+                resizedDimensions = getResizedImageDimensions(image);
+                els[i].width = resizedDimensions[0];
+                els[i].height = resizedDimensions[1];
+              }
+            });
+          })
+          .then(removeLoading)
+          .then(removeHidden);
+      }
+
+      function getResizedImageDimensions(image) {
+        let refWidth = 65; //Shopify thumbnail images are approx 65px in width
+        let ratio = image.width / refWidth;
+        resizedHeight = Math.round(image.height / ratio);
+        return [refWidth, resizedHeight];
+      }
+
+      function queryForCheckout() {
+        queryCount++;
+
+        fetch(`/gateway/checkout/${shopifyCheckoutID}`)
+          .then((resp) => {
+            if (resp.status === 404) {
+              throw new Error("Missing"); // Fall down into the catch
+            }
+
+            return resp.json();
+          })
+          .then((resp) => {
+            clearQueryInterval();
+            let lineItemsTotal = parseFloat(resp.total_price);
+            let cartTotal = customTotal / 100;
+
+            if (lineItemsTotal !== cartTotal) {
+              // Line item data may be stale. If stale ignore and display total passed as request value to gateway
+              displayTotalNoLineItems();
+            } else {
+              renderCheckout(resp);
+            }
+          })
+          .catch(() => {
+            if (queryCount > 2) {
+              clearQueryInterval();
+              displayTotalNoLineItems();
+              // Send log to datadog
+              datadogLog(
+                "error",
+                `(HostedCheckout) Checkout (${shopifyCheckoutID}) not found`,
+                { checkoutId: shopifyCheckoutID }
+              );
+            }
+          });
+      }
+
+      function displayTotalNoLineItems() {
+        const moneySign = "$";
+        const floatingTotal = customTotal / 100.0;
+
+        renderToEl(".currency", "USD");
+        renderToEl(".total-price", `${moneySign}${to2DP(floatingTotal)}`);
+
+        const totalEls = document.querySelectorAll(".total");
+        totalEls.forEach((totalEl) => {
+          totalEl.className = totalEl.className.replace("hidden", "");
+        });
+
+        removeLoading();
+      }
+
+      function renderBannerInnerHTML() {
+        let template = `<a herf="" class="logo-text">${shopName}</a>`;
+        appendToElements(".logo-text-wrapper", template);
+      }
+
+      function formatPhone(phone) {
+        p = phone.replace(/\D/g, "");
+        if (p.length > 10) p = p.slice(p.length - 10);
+        return p;
+      }
+
+      queryInterval = setInterval(queryForCheckout, 1000);
+
+      // Wait for the page to render
+      setTimeout(() => {
+        document.querySelector(".cancel-checkout").href = cancelURL;
+        renderBannerInnerHTML();
+      }, 1);
+    </script>
+    <script>
+      let miltonCheckoutID = "{{ .MiltonCheckoutID }}"
+      let completeUrl = "{{ .CompleteURL }}";
+      let setupObj = {{ .Setup }};
+      let placementObj = {{ .Placement }};
+
+      function onApproved(application){
+      }
+
+      function onCheckout(application) {
+        // Forward to complete
+        window.location.href = `${completeUrl}?gatewayCheckoutId=${miltonCheckoutID}&transactionId=${application.transactionID}&merchantId=${application.merchantID}`;
+      }
+
+      window.RBCPayPlan.setup(setupObj);
+      window.RBCPayPlan.on('INSTALLMENT:APPLICATION_DECISIONED', onApproved);
+      window.RBCPayPlan.on('INSTALLMENT:APPLICATION_CHECKOUT', onCheckout);
+      window.RBCPayPlan.registerPlacements([placementObj]);
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div id="mobile-banner" class="logo-text-wrapper"></div>
+      <div class="accordionWrapper mobile-only">
+        <div class="accordionItem close">
+          <div class="accordionItemHeading order-summary-toggle">
+            <div class="order-summary-toggle-inner-wrapper">
+              <span class="order-summary-toggle-icon-wrapper">
+                <svg
+                  width="20"
+                  height="19"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="order-summary-toggle-icon"
+                >
+                  <path
+                    d="M17.178 13.088H5.453c-.454 0-.91-.364-.91-.818L3.727 1.818H0V0h4.544c.455 0 .91.364.91.818l.09 1.272h13.45c.274 0 .547.09.73.364.18.182.27.454.18.727l-1.817 9.18c-.09.455-.455.728-.91.728zM6.27 11.27h10.09l1.454-7.362H5.634l.637 7.362zm.092 7.715c1.004 0 1.818-.813 1.818-1.817s-.814-1.818-1.818-1.818-1.818.814-1.818 1.818.814 1.817 1.818 1.817zm9.18 0c1.004 0 1.817-.813 1.817-1.817s-.814-1.818-1.818-1.818-1.818.814-1.818 1.818.814 1.817 1.818 1.817z"
+                  ></path>
+                </svg>
+              </span>
+              <span
+                class="
+                  order-summary-toggle-text-wrapper
+                  order-summary-toggle-show-text-wrapper
+                "
+              >
+                <span>Show order summary</span>
+                <svg
+                  width="11"
+                  height="6"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="order-summary-toggle-dropdown"
+                  fill="#000"
+                >
+                  <path
+                    d="M.504 1.813l4.358 3.845.496.438.496-.438 4.642-4.096L9.504.438 4.862 4.534h.992L1.496.69.504 1.812z"
+                  ></path>
+                </svg>
+              </span>
+              <span
+                class="
+                  order-summary-toggle-text-wrapper
+                  order-summary-toggle-hide-text-wrapper
+                  hide
+                "
+              >
+                <span>Hide order summary</span>
+                <svg
+                  width="11"
+                  height="7"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="order-summary-toggle-dropdown"
+                  fill="#000"
+                >
+                  <path
+                    d="M6.138.876L5.642.438l-.496.438L.504 4.972l.992 1.124L6.138 2l-.496.436 3.862 3.408.992-1.122L6.138.876z"
+                  ></path>
+                </svg>
+              </span>
+              <span class="order-summary-toggle-total-wrapper">
+                <span class="order-summary-toggle-total total-price"></span>
+              </span>
+            </div>
+          </div>
+          <div class="accordionItemContent cart-items-wrapper">
+            <div id="cart-items">
+              <div class="centered">
+                <div class="lds-ring">
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                </div>
+              </div>
+              <div class="line-items hidden"></div>
+              <div class="separator hidden"></div>
+              <div class="subtotal-lines hidden">
+                <div class="subtotal-label">Subtotal</div>
+                <div class="subtotal right"></div>
+                <br class="clear" />
+                <div class="shipping-label">Shipping</div>
+                <div class="shipping-total right"></div>
+                <br class="clear" />
+                <div class="taxes-label">Taxes</div>
+                <div class="taxes-total right"></div>
+              </div>
+              <div class="separator hidden"></div>
+              <div class="total hidden">
+                <div class="total-label">Total</div>
+                <div class="price-display right">
+                  <span class="currency"></span>
+                  <span class="total-price"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="content">
+        <div id="bread-checkout">
+          <div id="desktop-banner" class="logo-text-wrapper"></div>
+          <div id="main">
+            <div id="placement-checkout"></div>
+            <div class="cancel-checkout-container">
+              <a href="#" class="cancel-checkout">
+                &lt; No thanks, continue shopping</a
+              >
+            </div>
+          </div>
+          <div class="footer">
+            <p class="copyright-text">All rights reserved {{ .ShopName }}</p>
+          </div>
+        </div>
+        <div class="cart-items-wrapper desktop-only">
+          <div id="cart-items">
+            <div class="centered">
+              <div class="lds-ring">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+              </div>
+            </div>
+            <div class="line-items hidden"></div>
+            <div class="separator hidden"></div>
+            <div class="subtotal-lines hidden">
+              <div class="subtotal-label">Subtotal</div>
+              <div class="subtotal right"></div>
+              <br class="clear" />
+              <div class="shipping-label">Shipping</div>
+              <div class="shipping-total right"></div>
+              <br class="clear" />
+              <div class="taxes-label">Taxes</div>
+              <div class="taxes-total right"></div>
+            </div>
+            <div class="separator hidden"></div>
+            <div class="total hidden">
+              <div class="total-label">Total</div>
+              <div class="price-display right">
+                <span class="currency"></span>
+                <span class="total-price"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!--end cart items wrapper -->
+      </div>
+    </div>
+    <script>
+      function toggleItem() {
+        let itemClass = this.parentNode.className;
+        let showTextWrapper = document.getElementsByClassName(
+          "order-summary-toggle-show-text-wrapper"
+        )[0];
+        let hideTextWrapper = document.getElementsByClassName(
+          "order-summary-toggle-hide-text-wrapper"
+        )[0];
+
+        if (itemClass == "accordionItem close") {
+          this.parentNode.className = "accordionItem open";
+          showTextWrapper.classList.add("hide");
+          hideTextWrapper.classList.remove("hide");
+        } else {
+          this.parentNode.className = "accordionItem close";
+          hideTextWrapper.classList.add("hide");
+          showTextWrapper.classList.remove("hide");
+        }
+      }
+
+      // Accordion for mobile view
+      let accHD = document.getElementsByClassName("accordionItemHeading")[0];
+      accHD.addEventListener("click", toggleItem, false);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,8 @@
+sliceEnvironment:
+  migration:
+    enabled: true
+
+datadogEnv: {{ requiredEnv "NAMESPACE" }}
+config:
+  HostConfig:
+    MiltonHost: https://api.{{ requiredEnv "NAMESPACE" }}.{{ requiredEnv "STAGE" }}.{{ requiredEnv "REGION" }}.breadgateway.net/api/shopify-plugin-backend

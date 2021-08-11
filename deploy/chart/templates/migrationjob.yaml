@@ -1,0 +1,39 @@
+{{- if .Values.sliceEnvironment.migration.enabled }}
+{{- if mustRegexMatch "^slice-.*$" .Release.Namespace }}
+{{- $config := include "service.config" . | fromYaml }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: shopify-plugin-backend-migration-job
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 100
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      containers:
+      - name: shopify-plugin-backend-migration
+        image: {{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | default "Always" }}
+        env:
+        - name: SHOPIFY_PLUGIN_BACKEND_POSTGRES_MIGRATION_USERNAME
+          value: {{ $config.postgres.user }}
+        - name: SHOPIFY_PLUGIN_BACKEND_POSTGRES_MIGRATION_PASSWORD
+          value: {{ $config.postgres.password }}
+        - name: SHOPIFY_PLUGIN_BACKEND_POSTGRES_DATABASE
+          value: {{ $config.postgres.database }}
+        - name: SHOPIFY_PLUGIN_BACKEND_POSTGRES_HOST
+          value: {{ $config.postgres.host }}
+        - name: SLICE_ENVIRONMENT
+          value: "true"
+        command: ["/usr/bin/migration"]
+      restartPolicy: Never
+{{- end }}
+{{- end }}

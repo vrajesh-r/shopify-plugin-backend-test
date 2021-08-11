@@ -1,0 +1,53 @@
+ENV=development
+DOCKERFILE=Dockerfile
+HOST=localhost
+FE_HOST=http://localhost:7802
+DB_HOST=db
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=password
+DB_DATABASE=shopify
+DB_EXPOSED_PORT=5433
+DB_MAX_OPEN_CONNS=0
+DB_MAX_IDLE_CONNS=0
+
+MILTON_PORT=7800
+MILTON_DEBUG_PORT=20522
+##this is currently configured in the gateway settings in the Bread Finance Shopify Partners store
+SHOPIFY_API_VERSION=2020-07
+MILTON_HOST=https://bread-shopify.ngrok.io
+BREAD_HOST=https://api-dev.getbread.com
+BREAD_HOST_LOCAL=http://localhost:7777
+BREAD_HOST_DEVELOPMENT=https://api-dev-sandbox.getbread.com
+CHECKOUT_HOST=https://checkout-dev.getbread.com
+CHECKOUT_HOST_DEVELOPMENT=https://checkout-dev-sandbox.getbread.com
+CHECKOUT_HOST_LOCAL=https://bread-gladys.ngrok.io
+
+TRANSACTION_SERVICE_API_KEY=
+TRANSACTION_SERVICE_API_SECRET=
+TRANSACTION_SERVICE_HOST=
+
+## the following must be filled out. ask another Dev for access
+SHOPIFY_API_KEY=
+SHOPIFY_SHARED_SECRET=
+
+LAUNCHDARKLY_KEY=
+LAUNCHDARKLY_CLIENT_SIDE_ID=
+ 
+MILTON_ADMIN_SESSION_SECRET=
+MILTON_OAUTH_CLIENT_ID=
+MILTON_OAUTH_CLIENT_SECRET=
+
+#datadog will not work as configured currently for local dev. leaving for future use: 
+DATADOG_SITE=datadoghq.com 
+DATADOG_TRACE_ADDRESS=localhost:8126
+DATADOG_CLIENT_TOKEN=
+
+GATEWAY_TENANT=BREAD
+## the following are not currently used, but are good to keep around
+EXPOSED_DB_PORT=5433
+LOCAL_GATEWAY_KEY=
+LOCAL_GATEWAY_SECRET=
+MERCHANT_API_KEY=
+MERCHANT_API_SECRET=
+AVALARA_KEY=

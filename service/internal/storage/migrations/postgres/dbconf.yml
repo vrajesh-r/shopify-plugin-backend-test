@@ -1,0 +1,9 @@
+development:
+    driver: postgres
+    open: user=postgres dbname=shopify sslmode=disable password=mooncakes port=5432
+    table: goose_db_version
+
+cicd:
+    driver: postgres
+    open: user=$SHOPIFY_PLUGIN_BACKEND_POSTGRES_MIGRATION_USERNAME dbname=$SHOPIFY_PLUGIN_BACKEND_POSTGRES_DATABASE host=$SHOPIFY_PLUGIN_BACKEND_POSTGRES_HOST password=$SHOPIFY_PLUGIN_BACKEND_POSTGRES_MIGRATION_PASSWORD
+

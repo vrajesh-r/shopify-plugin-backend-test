@@ -1,0 +1,45 @@
+version: "1.0"
+stages:
+  - "clone"
+  - "lint"
+  - "test"
+  - "build"
+steps:
+  clone:
+    type: "git-clone"
+    description: "Cloning milton repository..."
+    repo: "getbread/milton"
+    revision: "${{CF_BRANCH}}"
+    stage: "clone"
+  lint:
+    title: Lint Test
+    image: golang:1.13.8-alpine3.11
+    stage: "lint"
+    fail_fast: false
+    commands:
+      - echo "machine github.com login $GITHUB_TOKEN" > /root/.netrc
+      - chmod 400 /root/.netrc
+      - apk add --update git build-base
+      - cd /codefresh/volume/milton
+      - wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.24.0
+      - ./bin/golangci-lint run ./...
+  unit_test:
+    title: Unit Test
+    image: golang:1.13.8-alpine3.11
+    stage: "test"
+    commands:
+      - echo "machine github.com login $GITHUB_TOKEN" > /root/.netrc
+      - chmod 400 /root/.netrc
+      - apk add --update git build-base
+      - cd /codefresh/volume/milton
+      - go test -p 1 ./...
+  build:
+    title: Build binaries
+    image: golang:1.13.8-alpine3.11
+    stage: "build"
+    commands:
+      - echo "machine github.com login $GITHUB_TOKEN" > /root/.netrc
+      - chmod 400 /root/.netrc
+      - apk add --update git build-base
+      - cd /codefresh/volume/milton
+      - go build ./...

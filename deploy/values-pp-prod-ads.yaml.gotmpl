@@ -1,0 +1,18 @@
+environment: production
+
+config:
+  service:
+    sandbox: false
+
+replicaCount: 15
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 256Mi
+  limits:
+    cpu: 2000m
+    memory: 1024Mi
+
+config:
+  tenant: ADS

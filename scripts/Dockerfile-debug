@@ -1,0 +1,88 @@
+##################################################### BUILDER BASE #####################################################
+FROM golang:1.15.2-alpine3.12 as builder-base
+RUN apk --no-cache add gcc g++
+# APP_DIR is used to put the project in the right place in the $GOPATH, so that Go tools work normally.
+ARG APP_DIR=github.com/getbread/milton
+# GITHUB_TOKEN is used to access internal dependencies from private Github repositories.
+ARG GITHUB_TOKEN
+RUN test -n "$GITHUB_TOKEN" # GITHUB_TOKEN build argument is *required*
+
+RUN apk add --update git npm 
+
+# Add the Github token to allow pulling from private, HTTPS-enabled repositories.
+RUN echo "machine github.com login $GITHUB_TOKEN" > /root/.netrc \
+    && chmod 400 /root/.netrc
+
+# Install goose
+# Goose is not strictly necessary at this stage but it is convenient to have *all* Go dependencies (both binaries
+# and libraries) in one place.
+RUN go get -u github.com/getbread/goose/cmd/goose
+
+WORKDIR /go/src/$APP_DIR
+
+ENV GO111MODULE=on
+COPY go.mod ./
+COPY go.sum ./
+RUN go mod download
+
+# Copy all the source in preparation for compilation.
+# NB: This is a bit inefficient since *any* change in the project triggers a recompilation.  However, there is no clean
+# way to copy all Go files while preserving directory structures yet. See: https://github.com/moby/moby/issues/15858
+COPY . .
+##################################################### BUILDER BASE #####################################################
+
+
+
+####################################################### BUILDER ########################################################
+FROM builder-base as builder
+
+# APP_DIR is used to put the project in the right place in the $GOPATH, so that Go tools work normally.
+ARG APP_DIR=github.com/getbread/milton
+# BUILD_PATH is the specific binary path to be built. It is relative to APP_DIR (e.g. `ach_service/ach_service`)
+ARG BUILD_PATH=milton
+# OUTPUT_DIR is the directory where the built binary will be saved.
+ARG OUTPUT_DIR=/opt/bread/milton/
+
+# The build path needs to be persisted so that the entrypoint script has access to it.
+ENV BUILD_PATH=$BUILD_PATH
+
+# Compile the program and output the resulting Go binary to the appropriate place.
+# The basename of BUILD_PATH is used to name the binary (e.g. `ach_service/ach_service` -> `ach_service`).
+EXPOSE 40000 1541
+RUN go build -o $OUTPUT_DIR/$(basename $BUILD_PATH) -gcflags="all=-N -l" $APP_DIR/milton 
+# Check if there is a "db" directory and if so copy some of its files over for later stages.
+# This step requires a RUN instead of COPY because using command output is not supported for COPYs.
+RUN if [ -d db ]; then \
+    mkdir ${OUTPUT_DIR}db \
+    && cp -r db/migrations ${OUTPUT_DIR}db \
+    && cp docker/dbconf.yml.template ${OUTPUT_DIR}db/; \
+    fi
+
+# Build public assets
+
+RUN  cp -r ./milton/build ${OUTPUT_DIR} 
+####################################################### BUILDER ########################################################
+
+
+
+###################################################### PRODUCTION ######################################################
+FROM golang:1.15.2-alpine3.12 as production
+
+ARG BUILD_PATH=milton
+
+ENV OUTPUT_DIR=/opt/bread/milton/
+ENV BUILD_PATH=$BUILD_PATH
+
+WORKDIR $OUTPUT_DIR
+RUN apk add --update git npm 
+RUN apk --no-cache add gcc g++
+RUN apk add --update ca-certificates libintl gettext 
+RUN go get -u github.com/getbread/goose/cmd/goose
+RUN go get github.com/go-delve/delve/cmd/dlv
+COPY --from=builder /go/bin/goose /bin/goose
+COPY --from=builder $OUTPUT_DIR $OUTPUT_DIR
+COPY --from=builder /go/src/github.com/getbread/shopify_plugin_backend/.env ${OUTPUT_DIR}.env
+COPY --from=builder /go/src/github.com/getbread/shopify_plugin_backend/docker/entrypoint-debug.sh /usr/local/bin
+RUN chmod 744 /usr/local/bin/entrypoint-debug.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint-debug.sh"]

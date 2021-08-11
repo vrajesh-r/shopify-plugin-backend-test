@@ -1,0 +1,10 @@
+releases:
+  - name: shopify-plugin-backend
+    chart: ./chart
+    wait: false
+    timeout: 600
+    labels:
+      uat: true
+    values:
+      - values.yaml.gotmpl
+      - values-{{ requiredEnv "CLUSTER_ID" }}.yaml.gotmpl

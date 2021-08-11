@@ -1,0 +1,21 @@
+{{- $config := include "service.config" . | fromYaml }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: shopify-plugin-backend
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ .Values.labels | toYaml | indent 4 }}
+spec:
+  selector:
+{{ .Values.labels | toYaml | indent 4 }}
+  type: ClusterIP
+  ports:
+    - name: http
+      port: {{ $config.http.port | required "config.http.port is required" }}
+      protocol: TCP
+      targetPort: {{ $config.http.port | required "config.http.port is required" }}
+    - name: grpc
+      port: {{ $config.grpc.port | required "config.grpc.port is required" }}
+      protocol: TCP
+      targetPort: {{ $config.grpc.port | required "config.grpc.port is required" }}

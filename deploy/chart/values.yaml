@@ -1,0 +1,72 @@
+replicaCount: 1
+environment: development
+configFileName: config.yaml
+configFilePath: /deploy/config
+
+config:
+  tracer: datadog_address
+  service:
+    name: shopify-plugin-backend
+    sandbox: true
+    tracingEnabled: true
+  postgres:
+    user: postgres
+    password:
+    database: shopify
+    host: postgresql
+    port: 5432
+  grpc:
+    host: "0.0.0.0"
+  http:
+    host: "0.0.0.0"
+  metrics:
+    name: datadog
+    endpoint: ${DD_KUBERNETES_KUBELET_HOST}
+    port: 8125
+  tracing:
+    name: datadog
+    endpoint: ${DD_KUBERNETES_KUBELET_HOST}
+    port: 8126
+
+labels:
+  app: shopify-plugin-backend
+  version: v0
+  part-of: bread-api
+  jwt-issuer: bread-api-gateway-jwt
+
+hosts:
+  - "*"
+
+virtualServiceMatches:
+  - uri:
+      prefix: /api/shopify-plugin-backend/
+
+requestPrincipals:
+  - "https://api.getbread.com/api/auth//*"
+
+jwtExemptHttpPaths:
+  - /health/live
+  - /health/ready
+  - /api/shopify-plugin-backend/gateway
+  - /api/shopify-plugin-backend/gateway/*
+  - /api/shopify-plugin-backend/*
+
+image:
+  repository: 230377472753.dkr.ecr.us-east-1.amazonaws.com
+  name: shopify_plugin_backend
+  tag: master-latest
+#  tag: development
+# Leave commented out for now
+#  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    cpu: 1m
+    memory: 4Mi
+  limits:
+    cpu: 100m
+    memory: 400Mi
+
+sliceEnvironment:
+  migration:
+    enabled: false

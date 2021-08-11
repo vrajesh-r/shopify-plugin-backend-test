@@ -1,0 +1,46 @@
+{{- $config := include "service.config" . | fromYaml }}
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: shopify-plugin-backend
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ .Values.labels | toYaml | indent 4 }}
+spec:
+  hosts:
+  {{- if .Values.hosts }}
+    {{- range $host := .Values.hosts }}
+    - {{ $host | quote }}
+    {{- end }}
+  {{- else }}
+    {{ .Values.hosts | required "hosts[] is required" }}
+  {{- end }}
+  gateways:
+    - bread-api-gateway
+  http:
+    - match:
+{{ .Values.virtualServiceMatches | toYaml | indent 8 | required "virtualServiceMatches[] is required" }}
+      rewrite:
+        uri: /
+      route:
+        - destination:
+            host: shopify-plugin-backend
+            port:
+              number: {{ $config.http.port | required "config.http.port is required" }}
+      retries:
+        attempts: 0
+      corsPolicy:
+        allowCredentials: true
+        allowOrigins:
+          - exact: "*"
+        allowMethods:
+          - POST
+          - GET
+          - PUT
+          - DELETE
+          - PATCH
+          - OPTIONS
+        allowHeaders:
+          # NOTE: Access-Control-Allow-Headers cannot use a wildcard for requests with credentials
+          - Content-Type
+          - Authorization

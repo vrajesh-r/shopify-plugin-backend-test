@@ -1,0 +1,70 @@
+# metrics:
+#   name: datadog
+#   endpoint: localhost
+#   port: 8125
+# tracing:
+#   name: datadog
+#   endpoint: localhost
+#   port: 8126 #If you use jaeger, default to 6831
+grpc:
+  host: localhost
+  port: 9000
+  shutdownTimeout: 5s
+http:
+  host: localhost
+  port: 8000
+  readTimeout: 5s
+  writeTimeout: 5s
+  shutdownTimeout: 5s
+service:
+  name: shopify-plugin-backend
+  sandbox: true
+  tracingEnabled: true
+postgres:
+  user: postgres
+  password: mooncakes
+  database: shopify
+  host: localhost
+  port: 5432
+mongodb:
+  user: mongodb
+  password:
+  database: shopify-plugin-backend
+  host: localhost
+  port: 27017
+env: development
+dockerfile: doesntgetusedithink
+host: localhost
+feHost: http://localhost:7802
+serveferoutes: true
+gatewaytenant: rbc
+dbexposedport: 5433
+miltonport: 7800
+avalarakey: +QHsEvPZ3MWhG3JVS7t/s3WuXi5u1pVihLskk38RfWz++bklL1J4lw9/jApT/fWp6kogj3XGmqT+QO6V5D5xog==
+HostConfig:
+  MiltonHost: https://milton.ngrok.io
+  BreadHost: https://api.getbread.co
+  BreadHostLocal: https://api-sandbox.getbread.com
+  BreadHostDevelopment: https://api-sandbox.getbread.com
+  CheckoutHost: https://checkout.getbread.com
+  CheckoutHostDevelopment: https://checkout-sandbox.getbread.com
+  CheckoutHostLocal: https://checkout-sandbox.getbread.com
+ShopifyConfig:
+  ShopifyApiVersion:
+  ShopifyApiKey: aab3d44da8cd4857ff76ade4a9df0ef3
+  ShopifySharedSecret: b9997af1b4e32e327e3222d4cd4fbe60
+SendgridClient:
+  SendgridMiltonApiKey: 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
+  SendgridMiltonPasswordResetTemplate: 3144416a-9e2c-4711-81e1-da8883fb0648
+FeatureFlag:
+  ClientSideID: 5c631761f3bd0832e32e52d
+  ClientSideKey: sdk-21ffd316-bbe0-4e42-9d37-1b74df696fe2
+  ClientInitTimeout:
+AdminAuth:
+  OauthClientId: 803552253847-5f8mddvf4i3bs6agvdaiaj5e64fjufpm.apps.googleusercontent.com
+  OauthClientSecret: UQ5Th4PugQXacpHz-p_dG2TC
+  AdminSessionSecret: BbvlLKjERUlUkx2irqEPNUlMYxBTz/zYElc9thWXexJ
+TransactionService:
+  TransactionServiceApiKey: f2a7204e-f8f0-47d8-af96-40eae8a2797f
+  TransactionServiceApiSecret: https://api.bread-ng.getbread.co
+  TransactionServiceHost: https://api.bread-ng.getbread.com

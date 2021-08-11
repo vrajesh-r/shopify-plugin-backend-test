@@ -1,0 +1,24 @@
+datadogEnv: {{ requiredEnv "STAGE" }}
+config:
+  postgres:
+    user: {{ requiredEnv "SHOPIFY_PLUGIN_BACKEND_POSTGRES_USERNAME" | quote }}
+    password: {{ requiredEnv "SHOPIFY_PLUGIN_BACKEND_POSTGRES_PASSWORD" | quote}}
+    database: {{ requiredEnv "SHOPIFY_PLUGIN_BACKEND_POSTGRES_DATABASE" | quote}}
+    host: {{ requiredEnv "SHOPIFY_PLUGIN_BACKEND_POSTGRES_HOST" | quote}}
+    port: {{ requiredEnv "SHOPIFY_PLUGIN_BACKEND_POSTGRES_PORT" | quote}}
+  avalarakey: {{requiredEnv "SHOPIFY_PLUGIN_BACKEND_AVALARA_KEY"}}
+  ShopifyConfig:
+    ShopifyApiKey: {{ requiredEnv "SHOPIFY_PLUGIN_BACKEND_API_KEY" | quote }}
+    ShopifySharedSecret: {{ requiredEnv "SHOPIFY_PLUGIN_BACKEND_SHARED_SECRET" | quote }}
+  SendgridClient:
+    SendgridMiltonApiKey: {{ requiredEnv "SHOPIFY_PLUGIN_BACKEND_SENDGRID_MILTON_API_KEY" | quote }}
+  FeatureFlag:
+    ClientSideId: {{ requiredEnv "SHOPIFY_PLUGIN_BACKEND_LD_CLIENTSIDE_ID" | quote }}
+    ClientSideKey: {{ requiredEnv "SHOPIFY_PLUGIN_BACKEND_LD_CLIENTSIDE_KEY" | quote }}
+  AdminAuth:
+    OauthClientSecret: {{requiredEnv "SHOPIFY_PLUGIN_BACKEND_OAUTH_CLIENT_SECRET" }}
+    AdminSessionSecret: {{requiredEnv "SHOPIFY_PLUGIN_BACKEND_ADMIN_SESSION_SECRET" }}
+  feHost: https://shopify-plugin.{{requiredEnv "STAGE"}}.{{requiredEnv "REGION"}}.breadgateway.net
+  HostConfig:
+    MiltonHost: https://api.{{ requiredEnv "STAGE" }}.{{ requiredEnv "REGION" }}.breadgateway.net/api/shopify-plugin-backend
+  

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>POS Restricted</title>
+  <script src="https://cdn.shopify.com/s/assets/external/pos_app.js"></script>
+  <script type="text/javascript">
+    ShopifyPOS.init({
+      apiKey: {{ .ShopifyAPIKey }},
+      shopOrigin: 'https://' + {{ .ShopName }} + '.myshopify.com'
+    });
+  </script>
+  <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:400,700" rel="stylesheet">
+</head>
+<body style="background:#fff;padding:24px 24px 0px 24px;font-family:Nunito Sans, sans-serif;font-size:16px;text-align:center;">
+  <h2 style="margin-bottom:2.5rem;">Approval required for Bread POS</h2>
+  <p style="font-size:1.2rem;line-height:1.5;text-align:left;">Please reach out to your main Success point of contact to request access.</p>
+</body>
+</html>

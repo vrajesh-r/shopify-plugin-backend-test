@@ -1,0 +1,88 @@
+{{- $config := include "service.config" . | fromYaml }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shopify-plugin-backend-v0
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "datadogLabels" . | indent 4 }}
+{{ .Values.labels | toYaml | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+{{ .Values.labels | toYaml | indent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include "service.config" . | sha256sum }}
+      labels:
+{{ include "datadogLabels" . | indent 8 }}
+{{ .Values.labels | toYaml | indent 8 }}
+    spec:
+      serviceAccountName: shopify-plugin-backend
+      containers:
+      - name: shopify-plugin-backend
+        image: {{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | default "Always" }}
+        env:
+          - name: ENVIRONMENT
+            value: {{ .Values.environment }}
+          - name: CONFIG_FILE_NAME
+            value: {{ .Values.configFileName }}
+          - name: CONFIG_FILE_PATH
+            value: {{ .Values.configFilePath }}
+          - name: DD_ENV
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.labels['tags.datadoghq.com/env']
+          - name: DD_SERVICE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.labels['tags.datadoghq.com/service']
+          - name: DD_VERSION
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.labels['tags.datadoghq.com/version']
+          - name: DD_KUBERNETES_KUBELET_HOST
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+        volumeMounts:
+          - name: shopify-plugin-backend-config
+            mountPath: "{{ .Values.configFilePath }}/{{ .Values.environment }}"
+            readOnly: true
+        ports:
+        - containerPort: {{ $config.http.port }}
+        - containerPort: {{ $config.grpc.port }}
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: {{ $config.http.port }}
+            scheme: HTTP
+          initialDelaySeconds: 40
+          failureThreshold: 5
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 1
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: {{ $config.http.port }}
+            scheme: HTTP
+          initialDelaySeconds: 30
+          failureThreshold: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
+      volumes:
+        - name: shopify-plugin-backend-config
+          secret:
+            secretName: shopify-plugin-backend-config

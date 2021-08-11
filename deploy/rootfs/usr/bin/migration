@@ -1,0 +1,35 @@
+#!/usr/bin/env sh
+
+if [ "$SLICE_ENVIRONMENT" == "true" ]; then
+    apk add postgresql-client
+
+    export PGUSER="$SHOPIFY_PLUGIN_BACKEND_POSTGRES_MIGRATION_USERNAME"
+    export PGPASSWORD="$SHOPIFY_PLUGIN_BACKEND_POSTGRES_MIGRATION_PASSWORD"
+    export PGDATABASE="$SHOPIFY_PLUGIN_BACKEND_POSTGRES_DATABASE"
+    export PGHOST="$SHOPIFY_PLUGIN_BACKEND_POSTGRES_HOST"
+    export PGSSLMODE="disable"
+
+    psql -c "SELECT current_database();" >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "creating database"
+        psql bread -c "CREATE DATABASE $SHOPIFY_PLUGIN_BACKEND_POSTGRES_DATABASE;"
+        DATABASE_CREATED="true"
+    fi
+fi
+
+cd service/internal/storage/migrations/postgres
+
+# Run migration
+goose -env cicd -path . up
+
+# Seed DB on DB creation
+if [ "$SLICE_ENVIRONMENT" == "true" ]; then
+    if [ "$DATABASE_CREATED" == "true" ]; then
+        SEED_FILE="slice-seed.sql"
+
+        if [[ -f "seed/$SEED_FILE" ]]; then
+            echo "seeding database"
+            psql "$SHOPIFY_PLUGIN_BACKEND_POSTGRES_DATABASE" -f "seed/$SEED_FILE"
+        fi
+    fi
+fi
