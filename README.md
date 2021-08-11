@@ -1,5 +1,7 @@
 this repo is WIP, currently working on deploying through Chef (need a zip of backend and front end code together) and being deployed separately in the kuberenetes bread pod.
 
+triggering build 
+
 # run as slice project
 
 requires:
