@@ -125,6 +125,8 @@ func init() {
 		logrus.Info(".env or config does or does not exist?")
 	}
 
+    fmt.Println("Hello world")
+
 	z := zerolog.New(os.Stderr).With().Str(LogStrKeyService, "application").Timestamp().Logger()
 	zlogger := z.With().Str(LogStrKeyModule, "main").Logger()
 	logrus.Infof("%+v", appConfig)
